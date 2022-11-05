@@ -21,6 +21,8 @@ public class ScriptCompileReloadTools
 
     const string kManualReloadDomain = "ManualReloadDomain";
 
+    static bool isEnterPlay;
+
     [InitializeOnLoadMethod]
     static void InitCompile()
     {
@@ -33,8 +35,22 @@ public class ScriptCompileReloadTools
         //编辑器设置 projectsetting->editor->enterPlayModeSetting
         EditorSettings.enterPlayModeOptionsEnabled = true;
         EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
-    }
 
+        if (PlayerPrefs.HasKey(kManualReloadDomain))
+        {
+            //已经开启手动
+            bool isEnable = PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1;
+
+            Menu.SetChecked(menuEnableManualReloadDomain, isEnable ? false : true);
+            Menu.SetChecked(menuDisenableManualReloadDomain, isEnable ? true : false);
+        }
+    }
+    //进入播放模式
+    [InitializeOnEnterPlayMode]
+    static void OnEnterPlayMode()
+    {
+        isEnterPlay = true;
+    }
 
     //当开始编辑脚本
     private static void OncompilationStarted(object obj)
@@ -92,12 +108,14 @@ public class ScriptCompileReloadTools
     //当Reload Domain
     [UnityEditor.Callbacks.DidReloadScripts]
     static void OnReloadDomain()
-    {
+    {   
+        //如果进入播放模式后 自动reload 不加锁
+        if (isEnterPlay) return;
         //重载之后再次锁住
         if (PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1)
         {
-           EditorApplication.LockReloadAssemblies();
-           Debug.Log("RealodDomain 完成");
+            EditorApplication.LockReloadAssemblies();
+            Debug.Log("RealodDomain 完成");
         }
     }
 }
