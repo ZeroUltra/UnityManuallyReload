@@ -26,11 +26,13 @@ Unity有个Enter Play Mode Setting  [可配置的进入运行模式 - Unity 手�
 
 ### 如何解决频繁Reload
 
-我们要做的就是,添加新脚本或者修改脚本后,经过确认无误之后,我们在reload,而且在进入 play模式,不会二次reload
+我们要做的就是,添加新脚本或者修改脚本后,经过确认无误之后,我们在reload,而且在进入 play模式,如果已经重载过域,不会二次reload
 
 unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorApplication.UnlockReloadAssemblies();`一个加锁,一个解锁.
 
 配合` Enter Play Mode Setting` 就可以大大减少时间.
+
+
 
 效果图:
 
@@ -144,7 +146,9 @@ public class ScriptCompileReloadTools
 }
 ```
 
+### 使用方法
 
+导入脚本之后,菜单栏`Tools->Tools/开启手动Reload Domain`  ,然后需要reload 时候按下`Ctrl+t`即可
 
 ### 参考
 
