@@ -4,62 +4,89 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using UnityEngine;
 /// <summary>
-/// ____DESC:      
+/// ____DESC:   手动reload domain 工具 
 /// </summary>
 public class ScriptCompileReloadTools
 {
-    /*
+    /* 说明
      * 关于域重载 https://docs.unity.cn/cn/2021.3/Manual/DomainReloading.html
      * EditorApplication.LockReloadAssemblies()和 EditorApplication.UnlockReloadAssemblies() 最好成对
      * 如果不小心LockReloadAssemblies3次 但是只UnlockReloadAssemblies了一次 那么还是不会重载 必须也要但是只UnlockReloadAssemblies3次
      */
+
     static Stopwatch compileSW = new Stopwatch();
 
-    const string menuEnableManualReloadDomain = "Tools/开启手动Reload Domain";
-    const string menuDisenableManualReloadDomain = "Tools/关闭手动Reload Domain";
+    const string menuEnableManualReload = "Tools/开启手动Reload Domain";
+    const string menuDisenableManualReload = "Tools/关闭手动Reload Domain";
     const string menuRealodDomain = "Tools/Unlock Reload %t";
-
     const string kManualReloadDomain = "ManualReloadDomain";
+    const string kIsLock = "DomainIsLock";
 
-    static bool isEnterPlay;
+
+    /*需要存贮 因为reload之后静态数据清空了*/
+    //加锁此时 成对
+    static bool IsLock { get => PlayerPrefs.GetInt(kIsLock, -1) == 1; set => PlayerPrefs.SetInt(kIsLock, value ? 1 : 0); }
+    //是否手动reload
+    static bool IsManualReload => PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1;
+
+    //缓存数据 域重载之后数据会变成false 如果不是false 那么就要重载
+    static bool tempData = false;
 
     [InitializeOnLoadMethod]
     static void InitCompile()
     {
-        //不需要这个可以注释
-        CompilationPipeline.compilationStarted -= OncompilationStarted;
-        CompilationPipeline.compilationStarted += OncompilationStarted;
-        CompilationPipeline.compilationFinished -= OncompilationFinished;
-        CompilationPipeline.compilationFinished += OncompilationFinished;
+        //**************不需要这个可以注释********************************
+        CompilationPipeline.compilationStarted -= OnCompilationStarted;
+        CompilationPipeline.compilationStarted += OnCompilationStarted;
+        CompilationPipeline.compilationFinished -= OnCompilationFinished;
+        CompilationPipeline.compilationFinished += OnCompilationFinished;
+        //**************************************************************
 
-        //编辑器设置 projectsetting->editor->enterPlayModeSetting
-        EditorSettings.enterPlayModeOptionsEnabled = true;
-        EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
+        //域重载事件监听
+        //AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+        //AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+        //AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
+        //AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+        EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
+        EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
 
         if (PlayerPrefs.HasKey(kManualReloadDomain))
         {
             //已经开启手动
-            bool isEnable = PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1;
-
-            Menu.SetChecked(menuEnableManualReloadDomain, isEnable ? true : false);
-            Menu.SetChecked(menuDisenableManualReloadDomain, isEnable ? false : true);
+            Menu.SetChecked(menuEnableManualReload, IsManualReload ? true : false);
+            Menu.SetChecked(menuDisenableManualReload, IsManualReload ? false : true);
         }
     }
-    //进入播放模式
-    [InitializeOnEnterPlayMode]
-    static void OnEnterPlayMode()
+
+    private static void EditorApplication_playModeStateChanged(PlayModeStateChange state)
     {
-        isEnterPlay = true;
+        switch (state)
+        {
+            case PlayModeStateChange.EnteredEditMode:
+                break;
+            case PlayModeStateChange.ExitingEditMode:
+                if (tempData)
+                {
+                    UnlockReloadDomain();
+                    EditorUtility.RequestScriptReload();
+                }
+                break;
+            case PlayModeStateChange.EnteredPlayMode:
+                tempData = true;
+                break;
+            case PlayModeStateChange.ExitingPlayMode:
+                break;
+        }
     }
 
     //当开始编辑脚本
-    private static void OncompilationStarted(object obj)
+    private static void OnCompilationStarted(object obj)
     {
         compileSW.Start();
         Debug.Log("<color=yellow>开始编译脚本</color>");
     }
     //结束编译
-    private static void OncompilationFinished(object obj)
+    private static void OnCompilationFinished(object obj)
     {
         compileSW.Stop();
         Debug.Log($"<color=yellow>结束编译脚本 耗时:{compileSW.ElapsedMilliseconds} ms</color>");
@@ -67,55 +94,72 @@ public class ScriptCompileReloadTools
     }
 
 
-    //开启手动reload
-    [MenuItem(menuEnableManualReloadDomain)]
+
+    static void LockRealodDomain()
+    {
+        if (!IsLock)
+        {
+            IsLock = true;
+            EditorApplication.LockReloadAssemblies();
+        }
+    }
+
+    static void UnlockReloadDomain()
+    {
+        if (IsLock)
+        {
+            IsLock = false;
+            EditorApplication.UnlockReloadAssemblies();
+        }
+    }
+
+    [MenuItem(menuEnableManualReload)]
     static void EnableManualReloadDomain()
     {
-        Menu.SetChecked(menuEnableManualReloadDomain, true);
-        Menu.SetChecked(menuDisenableManualReloadDomain, false);
-
-        PlayerPrefs.SetInt(kManualReloadDomain, 1);
         Debug.Log("<color=cyan>开启手动 Reload Domain</color>");
 
-        EditorApplication.LockReloadAssemblies();
+        Menu.SetChecked(menuEnableManualReload, true);
+        Menu.SetChecked(menuDisenableManualReload, false);
+
+        PlayerPrefs.SetInt(kManualReloadDomain, 1);
+        //编辑器设置 projectsetting->editor->enterPlayModeSetting
+        EditorSettings.enterPlayModeOptionsEnabled = true;
+        EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
+
+        LockRealodDomain();
     }
-    //关闭手动reload
-    [MenuItem(menuDisenableManualReloadDomain)]
+
+    [MenuItem(menuDisenableManualReload)]
     static void DisenableManualReloadDomain()
     {
-        Menu.SetChecked(menuEnableManualReloadDomain, false);
-        Menu.SetChecked(menuDisenableManualReloadDomain, true);
+        Debug.Log("<color=cyan>关闭手动 Reload Domain</color>");
+
+        Menu.SetChecked(menuEnableManualReload, false);
+        Menu.SetChecked(menuDisenableManualReload, true);
 
         PlayerPrefs.SetInt(kManualReloadDomain, 0);
-
-        Debug.Log("<color=cyan>关闭手动 Reload Domain</color>");
-        EditorApplication.UnlockReloadAssemblies();
-        EditorApplication.UnlockReloadAssemblies();
-        EditorApplication.UnlockReloadAssemblies();
+        UnlockReloadDomain();
+        EditorSettings.enterPlayModeOptionsEnabled = false;
     }
     //手动刷新
     [MenuItem(menuRealodDomain)]
     static void ManualReload()
     {
-        if (PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1)
+        if (IsManualReload)
         {
-            Debug.Log("Reload Domain ......");
-            EditorApplication.UnlockReloadAssemblies();
+            Debug.Log("<color=yellow>Begin Reload Domain ......</color>");
+            UnlockReloadDomain();
             EditorUtility.RequestScriptReload();
         }
     }
 
-    //当Reload Domain
     [UnityEditor.Callbacks.DidReloadScripts]
-    static void OnReloadDomain()
+    static void OnReload()
     {
-        //如果进入播放模式后 自动reload 不加锁
-        if (isEnterPlay) return;
-        //重载之后再次锁住
-        if (PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1)
+        if (IsManualReload)
         {
-            EditorApplication.LockReloadAssemblies();
-            Debug.Log("RealodDomain 完成");
+            Debug.Log($"<color=yellow>End Reload Domain</color>");
+            LockRealodDomain();
         }
     }
 }
