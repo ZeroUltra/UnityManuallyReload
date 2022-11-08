@@ -2,6 +2,8 @@
 
 这是个自定义reload domain工具,加快工作流,减少等待.测试版本是Unity2021,理论上来说2020以上都可.
 
+Unity2021(2020还好)不知是哪个版本,明显感觉编译reload时间冗长🥱😪😯
+
 脚本地址:[UnityManualReload (github.com)](https://github.com/ZeroUltra/UnityManualReload/blob/main/ScriptCompileReloadTools.cs)
 
 ### 在Unity中遇到的问题
@@ -28,7 +30,7 @@ Unity有个Enter Play Mode Setting  [可配置的进入运行模式 - Unity 手�
 
 ### 如何解决频繁Reload
 
-我们要做的就是,添加新脚本或者修改脚本后,经过确认无误之后,我们在reload,而且在进入 play模式,如果已经重载过域,不会二次reload
+我们要做的就是,添加新脚本或者修改脚本后,经过确认无误之后,我们才reload,而且在进入 play模式,如果已经reload,不会二次reload
 
 unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorApplication.UnlockReloadAssemblies();`一个加锁,一个解锁.
 
