@@ -41,8 +41,8 @@ public class ScriptCompileReloadTools
             //已经开启手动
             bool isEnable = PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1;
 
-            Menu.SetChecked(menuEnableManualReloadDomain, isEnable ? false : true);
-            Menu.SetChecked(menuDisenableManualReloadDomain, isEnable ? true : false);
+            Menu.SetChecked(menuEnableManualReloadDomain, isEnable ? true : false);
+            Menu.SetChecked(menuDisenableManualReloadDomain, isEnable ? false : true);
         }
     }
     //进入播放模式
@@ -108,7 +108,7 @@ public class ScriptCompileReloadTools
     //当Reload Domain
     [UnityEditor.Callbacks.DidReloadScripts]
     static void OnReloadDomain()
-    {   
+    {
         //如果进入播放模式后 自动reload 不加锁
         if (isEnterPlay) return;
         //重载之后再次锁住
