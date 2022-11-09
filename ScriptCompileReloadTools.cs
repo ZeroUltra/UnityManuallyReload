@@ -74,7 +74,6 @@ public class ScriptCompileReloadTools
             SessionState.SetBool(kFirstEnterUnity, false);
             if (PlayerPrefs.HasKey(kManualReloadDomain))
             {
-                //首次启动的时候 并不会马上设置
                 Menu.SetChecked(menuEnableManualReload, IsManualReload ? true : false);
                 Menu.SetChecked(menuDisenableManualReload, IsManualReload ? false : true);
                 if (IsManualReload)
