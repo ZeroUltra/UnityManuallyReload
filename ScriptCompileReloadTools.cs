@@ -72,15 +72,12 @@ public class ScriptCompileReloadTools
         if (SessionState.GetBool(kFirstEnterUnity, true))
         {
             SessionState.SetBool(kFirstEnterUnity, false);
-            if (PlayerPrefs.HasKey(kManualReloadDomain))
+            Menu.SetChecked(menuEnableManualReload, IsManualReload ? true : false);
+            Menu.SetChecked(menuDisenableManualReload, IsManualReload ? false : true);
+            if (IsManualReload)
             {
-                Menu.SetChecked(menuEnableManualReload, IsManualReload ? true : false);
-                Menu.SetChecked(menuDisenableManualReload, IsManualReload ? false : true);
-                if (IsManualReload)
-                {
-                    UnlockReloadDomain();
-                    LockRealodDomain();
-                }
+                UnlockReloadDomain();
+                LockRealodDomain();
             }
         }
     }
