@@ -109,7 +109,7 @@ public class ScriptCompileReloadTools
         if (IsManualReload)
         {
             compileSW.Start();
-            Debug.Log("<color=yellow>Begin Complie</color>");
+            Debug.Log("<color=yellow>Begin Compile</color>");
         }
     }
     //结束编译
