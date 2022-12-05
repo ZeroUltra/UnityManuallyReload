@@ -46,6 +46,8 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 脚本导入Editor文件夹之后,菜单栏`Tools->Tools/开启手动Reload Domain`  ,然后需要reload 时候按下`Ctrl+t`即可.
 
+`如果开启,新建脚本或者导入插件的时候,都手动reload 一下`
+
 ~~需要注意的是,因为脚本禁用了`reload domain`,如果运行前没有手动reload,静态数据不会清空,可能会产生一些问题~~
 
 **新改进2022年11月8日15:32:33**
