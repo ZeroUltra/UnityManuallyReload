@@ -3,7 +3,7 @@ using UnityEditor.Compilation;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using UnityEngine;
-using System;
+using System.Reflection;
 /// <summary>
 /// ____DESC:   手动reload domain 工具 
 /// </summary>
@@ -15,25 +15,40 @@ public class ScriptCompileReloadTools
      * 如果不小心LockReloadAssemblies3次 但是只UnlockReloadAssemblies了一次 那么还是不会重载 必须也要但是只UnlockReloadAssemblies3次
      */
 
-    const string menuEnableManualReload = "Tools/开启手动Reload Domain";
-    const string menuDisenableManualReload = "Tools/关闭手动Reload Domain";
-    const string menuRealodDomain = "Tools/Unlock Reload %t";
-    const string kManualReloadDomain = "ManualReloadDomain";
-    const string kIsLock = "DomainIsLock";
-    const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
-    const string kReloadDomainTimer = "ReloadDomainTimer";
+    const string menuEnableManualReload = GameMenuConfig.Menu + "Tools/Script/开启手动Reload Domain";
+    const string menuDisenableManualReload = GameMenuConfig.Menu + "Tools/Script/关闭手动Reload Domain";
+    const string menuRealodDomain = GameMenuConfig.Menu + "Tools/Script/Unlock Reload %t";
 
-    /************************************************/
+    const string kManualReloadDomain = "ManualReloadDomain";
+    const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
+    const string kReloadDomainTimer = "ReloadDomainTimer";//计时
+
+
+    /**************************************************/
+    //编译时间
     static Stopwatch compileSW = new Stopwatch();
-    /*需要存贮 因为reload之后静态数据清空了*/
-    //加锁此时 成对
-    static bool IsLock { get => PlayerPrefs.GetInt(kIsLock, -1) == 1; set => PlayerPrefs.SetInt(kIsLock, value ? 1 : 0); }
     //是否手动reload
     static bool IsManualReload => PlayerPrefs.GetInt(kManualReloadDomain, -1) == 1;
     //缓存数据 域重载之后数据会变成false 如果不是false 那么就要重载
     static bool tempData = false;
-    /************************************************/
 
+    //https://github.com/INeatFreak/unity-background-recompiler 来自这个库 反射获取是否锁住
+    static MethodInfo CanReloadAssembliesMethod;
+    static bool IsLocked
+    {
+        get
+        {
+            if (CanReloadAssembliesMethod == null)
+            {
+                // source: https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/EditorApplication.bindings.cs#L154
+                CanReloadAssembliesMethod = typeof(EditorApplication).GetMethod("CanReloadAssemblies", BindingFlags.NonPublic | BindingFlags.Static);
+                if (CanReloadAssembliesMethod == null)
+                    Debug.LogError("Can't find CanReloadAssemblies method. It might have been renamed or removed.");
+            }
+            return !(bool)CanReloadAssembliesMethod.Invoke(null, null);
+        }
+    }
+    /**************************************************/
 
 
     [InitializeOnLoadMethod]
@@ -51,37 +66,43 @@ public class ScriptCompileReloadTools
         AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
         AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
         AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+
         EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
         EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
+
 
         //Bug 首次启动的时候 并不会马上设置
         //if (PlayerPrefs.HasKey(kManualReloadDomain))
         //{
-        //    //首次启动的时候 并不会马上设置
         //    Menu.SetChecked(menuEnableManualReload, IsManualReload ? true : false);
         //    Menu.SetChecked(menuDisenableManualReload, IsManualReload ? false : true);
         //}
         FirstCheckAsync();
     }
 
-
+    //首次打开检测
     async static void FirstCheckAsync()
     {
         await System.Threading.Tasks.Task.Delay(100);
+        //判断是否首次打开
         //https://docs.unity.cn/cn/2021.3/ScriptReference/SessionState.html
         if (SessionState.GetBool(kFirstEnterUnity, true))
         {
             SessionState.SetBool(kFirstEnterUnity, false);
             Menu.SetChecked(menuEnableManualReload, IsManualReload ? true : false);
             Menu.SetChecked(menuDisenableManualReload, IsManualReload ? false : true);
+
             if (IsManualReload)
             {
                 UnlockReloadDomain();
                 LockRealodDomain();
             }
+            Debug.Log($"<color=lime>当前ReloadDomain状态,是否手动: {IsManualReload}</color>");
         }
     }
 
+
+    //运行模式改变
     private static void EditorApplication_playModeStateChanged(PlayModeStateChange state)
     {
         switch (state)
@@ -103,7 +124,7 @@ public class ScriptCompileReloadTools
         }
     }
 
-    //当开始编辑脚本
+    //当开始编译脚本
     private static void OnCompilationStarted(object obj)
     {
         if (IsManualReload)
@@ -112,6 +133,7 @@ public class ScriptCompileReloadTools
             Debug.Log("<color=yellow>Begin Compile</color>");
         }
     }
+
     //结束编译
     private static void OnCompilationFinished(object obj)
     {
@@ -123,6 +145,7 @@ public class ScriptCompileReloadTools
         }
     }
 
+    //开始reload domain
     private static void OnBeforeAssemblyReload()
     {
         if (IsManualReload)
@@ -133,6 +156,7 @@ public class ScriptCompileReloadTools
         }
 
     }
+    //结束reload domain
     private static void OnAfterAssemblyReload()
     {
         if (IsManualReload)
@@ -144,20 +168,22 @@ public class ScriptCompileReloadTools
     }
 
 
+
+
     static void LockRealodDomain()
     {
-        if (!IsLock)
+        //如果没有锁住 锁住
+        if (!IsLocked)
         {
-            IsLock = true;
             EditorApplication.LockReloadAssemblies();
         }
     }
 
     static void UnlockReloadDomain()
     {
-        if (IsLock)
+        //如果锁住了 打开
+        if (IsLocked)
         {
-            IsLock = false;
             EditorApplication.UnlockReloadAssemblies();
         }
     }
@@ -200,15 +226,5 @@ public class ScriptCompileReloadTools
             EditorUtility.RequestScriptReload();
         }
     }
-
-    //[UnityEditor.Callbacks.DidReloadScripts]
-    //static void OnEndReload()
-    //{
-    //    if (IsManualReload)
-    //    {
-    //        Debug.Log($"<color=yellow>End Reload Domain</color>");
-    //        LockRealodDomain();
-    //    }
-    //}
 
 }
