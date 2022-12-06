@@ -15,9 +15,9 @@ public class ScriptCompileReloadTools
      * 如果不小心LockReloadAssemblies3次 但是只UnlockReloadAssemblies了一次 那么还是不会重载 必须也要但是只UnlockReloadAssemblies3次
      */
 
-    const string menuEnableManualReload = GameMenuConfig.Menu + "Tools/Script/开启手动Reload Domain";
-    const string menuDisenableManualReload = GameMenuConfig.Menu + "Tools/Script/关闭手动Reload Domain";
-    const string menuRealodDomain = GameMenuConfig.Menu + "Tools/Script/Unlock Reload %t";
+    const string menuEnableManualReload = "Tools/Script/开启手动Reload Domain";
+    const string menuDisenableManualReload ="Tools/Script/关闭手动Reload Domain";
+    const string menuRealodDomain ="Tools/Script/Unlock Reload %t";
 
     const string kManualReloadDomain = "ManualReloadDomain";
     const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
