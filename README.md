@@ -57,3 +57,7 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 ### 参考
 
 [Unity 关闭脚本编译 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/441996008)
+
+### 推荐 
+
+[Misaka-Mikoto-Tech/UnityScriptHotReload: HotReload Unity C# script without exit play mode and keep the running context unchanged (github.com)](https://github.com/Misaka-Mikoto-Tech/UnityScriptHotReload)
