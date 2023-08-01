@@ -1,0 +1,11 @@
+{
+  "name": "com.zeroultra.manuallyreloaddomain",
+  "version": "1.0.2",
+  "displayName": "ManuallyReloadDomain",
+  "description": "Manually Reload Domain",
+  "documentationUrl": "https://github.com/ZeroUltra/UnityManualReload",
+  "changelogUrl": "https://github.com/ZeroUltra/UnityManualReload",
+  "licensesUrl": "https://github.com/ZeroUltra/UnityManualReload",
+  "hideInEditor": false,
+  "keywords": ["ReloadDomain"]
+}
