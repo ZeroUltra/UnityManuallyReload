@@ -71,3 +71,4 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 [Misaka-Mikoto-Tech/UnityScriptHotReload: HotReload Unity C# script without exit play mode and keep the running context unchanged (github.com)](https://github.com/Misaka-Mikoto-Tech/UnityScriptHotReload)
 
 [【Unity】引擎编译时间优化 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/601065788)
+
