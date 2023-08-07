@@ -237,11 +237,11 @@ namespace Plugins.ManuallyReload
         [MenuItem(menuRealodDomain)]
         static void ManualReload()
         {
-            if (EditorApplication.isCompiling)
-            {
-                Debug.Log("unity is busy,wait a moment...");
-                return;
-            }
+            //if (EditorApplication.isCompiling)
+            //{
+               // Debug.Log("unity is busy,wait a moment...");
+                //return;
+            //}
             if (isNewCompile && IsManuallyReload)
             {
                 ForceReloadDomain();
