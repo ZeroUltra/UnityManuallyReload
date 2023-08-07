@@ -26,7 +26,7 @@ Unity有个Enter Play Mode Setting  [可配置的进入运行模式 - Unity 手�
 
 ## 如何解决频繁Reload
 
-需要要做的就是,添加新脚本或者修改脚本后,经过确认无误之后,我们才reload,而且在进入 play模式,如果已经reload,不会二次reload
+需要做的就是,添加新脚本或者修改脚本后,经过确认无误之后,我们才reload,而且在进入 play模式,如果已经reload,不会二次reload
 
 unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorApplication.UnlockReloadAssemblies();`一个加锁,一个解锁.
 
@@ -61,6 +61,7 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 * 添加了Unity Package
 * 避免了可能不小心手动多次reload情况
 * 修改了数据保存代码逻辑
+* 修复新建脚本或者assembly的时候没有刷新的问题
 
 ### 参考
 

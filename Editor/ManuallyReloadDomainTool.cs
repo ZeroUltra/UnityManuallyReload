@@ -17,9 +17,9 @@ namespace Plugins.ManuallyReload
          * 如果不小心LockReloadAssemblies3次 但是只UnlockReloadAssemblies了一次 那么还是不会重载 必须也要但是只UnlockReloadAssemblies3次
          */
 
-        const string menuEnableManualReload = "Tools/Reload Domain/Enable Manually Reload Domain";
-        const string menuDisenableManualReload = "Tools/Reload Domain/Disable Manually Reload Domain";
-        const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload %t";
+        const string menuEnableManualReload = GameMenuConfig.RootMenu + "Tools/Reload Domain/开启手动Reload Domain";
+        const string menuDisenableManualReload = GameMenuConfig.RootMenu + "Tools/Reload Domain/关闭手动Reload Domain";
+        const string menuRealodDomain = GameMenuConfig.RootMenu + "Tools/Reload Domain/Unlock Reload %t";
         const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
         const string kReloadDomainTimer = "ReloadDomainTimer";//计时
         const string logFormat = "<color=yellow>{0}</color>";
@@ -45,7 +45,7 @@ namespace Plugins.ManuallyReload
         //编译时间
         static Stopwatch compileSW = new Stopwatch();
         //是否手动reload
-        static bool IsManuallyReload => ManuallyReloadSetting.instance.IsEnableManuallyReload;
+        public static bool IsManuallyReload => ManuallyReloadSetting.instance.IsEnableManuallyReload;
 
         //判断是否进入了播放模式 每次域重载之后数据都会变回false 
         //加这个原因是为了重置静态数据 https://docs.unity.cn/cn/2021.3/Manual/DomainReloading.html
@@ -76,7 +76,7 @@ namespace Plugins.ManuallyReload
             //如果不需要自动重置数据请注释下面两行代码
             EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
             EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
-        
+
             InitMenu();
         }
 
@@ -84,7 +84,8 @@ namespace Plugins.ManuallyReload
         //首次打开检测
         async static void InitMenu()
         {
-            await System.Threading.Tasks.Task.Delay(100);
+            //必须要延迟下
+            await System.Threading.Tasks.Task.Delay(200);
             //判断是否首次打开
             //https://docs.unity.cn/cn/2021.3/ScriptReference/SessionState.html
             if (SessionState.GetBool(kFirstEnterUnity, true))
@@ -143,11 +144,11 @@ namespace Plugins.ManuallyReload
         }
 
         //强制reloaddomain
-        static void ForceReloadDomain()
+        public static void ForceReloadDomain()
         {
             UnlockReloadDomain();
             EditorUtility.RequestScriptReload();
-            
+
         }
 
         #region AssembleCompile
@@ -236,12 +237,12 @@ namespace Plugins.ManuallyReload
         [MenuItem(menuRealodDomain)]
         static void ManualReload()
         {
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+            if (EditorApplication.isCompiling)
             {
                 Debug.Log("unity is busy,wait a moment...");
                 return;
             }
-            if (isNewCompile&&IsManuallyReload)
+            if (isNewCompile && IsManuallyReload)
             {
                 ForceReloadDomain();
             }
@@ -264,5 +265,27 @@ namespace Plugins.ManuallyReload
             IsEnableManuallyReload = isEnable;
             Save(true);
         }
+    }
+
+    public class SciptsProcessor : AssetModificationProcessor
+    {
+        //此函数在asset被创建，生成了.meta但没有导入完成之间调用
+        static void OnWillCreateAsset(string assetMeta)
+        {
+            //获取创建文件的类型
+            string assetName = assetMeta.Replace(".meta", "");
+            Debug.Log(assetName);
+            //如果新建脚本或asm
+            if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
+            {
+                //如果是手动
+                if (ManuallyReloadDomainTool.IsManuallyReload)
+                {
+                    //强制reload domain
+                    ManuallyReloadDomainTool.ForceReloadDomain();
+                }
+            }
+        }
+       
     }
 }
