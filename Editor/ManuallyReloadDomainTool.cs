@@ -17,9 +17,9 @@ namespace Plugins.ManuallyReload
          * 如果不小心LockReloadAssemblies3次 但是只UnlockReloadAssemblies了一次 那么还是不会重载 必须也要但是只UnlockReloadAssemblies3次
          */
 
-        const string menuEnableManualReload = GameMenuConfig.RootMenu + "Tools/Reload Domain/开启手动Reload Domain";
-        const string menuDisenableManualReload = GameMenuConfig.RootMenu + "Tools/Reload Domain/关闭手动Reload Domain";
-        const string menuRealodDomain = GameMenuConfig.RootMenu + "Tools/Reload Domain/Unlock Reload %t";
+        const string menuEnableManualReload = "Tools/Reload Domain/开启手动Reload Domain";
+        const string menuDisenableManualReload ="Tools/Reload Domain/关闭手动Reload Domain";
+        const string menuRealodDomain ="Tools/Reload Domain/Unlock Reload %t";
         const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
         const string kReloadDomainTimer = "ReloadDomainTimer";//计时
         const string logFormat = "<color=yellow>{0}</color>";
