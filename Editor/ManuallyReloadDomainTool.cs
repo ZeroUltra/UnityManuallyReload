@@ -320,13 +320,14 @@ namespace Plugins.ManuallyReload
         {
             //获取创建文件的类型
             string assetName = assetMeta.Replace(".meta", "");
-            Debug.Log(assetName);
+         
             //如果新建脚本或asm
             if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
             {
                 //如果是手动
                 if (ManuallyReloadDomainTool.IsManuallyReload)
                 {
+                    Debug.Log($"Force Reload, New File: {assetName}" );
                     //强制reload domain
                     ManuallyReloadDomainTool.ForceReloadDomain();
                 }
