@@ -4,8 +4,7 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using UnityEngine;
 using System.Reflection;
-using System.Collections.Generic;
-using System.Text;
+using System.IO;
 
 namespace Plugins.ManuallyReload
 {
@@ -45,7 +44,7 @@ namespace Plugins.ManuallyReload
         //编译时间
         static Stopwatch compileSW = new Stopwatch();
         //是否手动reload
-        public static bool IsManuallyReload => ManuallyReloadSetting.instance.IsEnableManuallyReload;
+        public static bool IsManuallyReload => ManuallyReloadSetting.Instance.IsEnableManuallyReload;
 
         //判断是否进入了播放模式 每次域重载之后数据都会变回false 
         //加这个原因是为了重置静态数据 https://docs.unity.cn/cn/2021.3/Manual/DomainReloading.html
@@ -53,7 +52,6 @@ namespace Plugins.ManuallyReload
 
         //是否编译了
         static bool isNewCompile = false;
-
 
 
         [InitializeOnLoadMethod]
@@ -199,8 +197,6 @@ namespace Plugins.ManuallyReload
         }
         #endregion
 
-
-
         #region Menu
         [MenuItem(menuEnableManualReload)]
         static void EnableManuallyReloadDomain()
@@ -211,7 +207,7 @@ namespace Plugins.ManuallyReload
             Menu.SetChecked(menuDisenableManualReload, false);
 
             //保存设置
-            ManuallyReloadSetting.instance.SetEnableManuallyReload(true);
+            ManuallyReloadSetting.Instance.SetEnableManuallyReload(true);
 
             //编辑器设置 projectsetting->editor->enterPlayModeSetting
             EditorSettings.enterPlayModeOptionsEnabled = true;
@@ -228,7 +224,7 @@ namespace Plugins.ManuallyReload
             Menu.SetChecked(menuEnableManualReload, false);
             Menu.SetChecked(menuDisenableManualReload, true);
 
-            ManuallyReloadSetting.instance.SetEnableManuallyReload(false);
+            ManuallyReloadSetting.Instance.SetEnableManuallyReload(false);
 
             UnlockReloadDomain();
             EditorSettings.enterPlayModeOptionsEnabled = false;
@@ -251,21 +247,71 @@ namespace Plugins.ManuallyReload
     }
 
 
-    /// <summary>
-    /// 相关设置
-    /// </summary>
-    [FilePath("ProjectSettings/ManuallyReloadSetting.asset", FilePathAttribute.Location.ProjectFolder)]
-    public class ManuallyReloadSetting : ScriptableSingleton<ManuallyReloadSetting>
+    #region 相关设置
+    #region 废弃 垃圾
+    //[FilePath("ProjectSettings/ManuallyReloadSetting.asset", FilePathAttribute.Location.ProjectFolder)]
+    //public class ManuallyReloadSetting : ScriptableSingleton<ManuallyReloadSetting>
+    //{
+    //    //是否开启了手动reload
+    //    public bool IsEnableManuallyReload;
+    //    public void SetEnableManuallyReload(bool isEnable)
+    //    {
+    //        IsEnableManuallyReload = isEnable;
+    //        Save(true);
+    //    }
+    //} 
+    #endregion
+
+    public class ManuallyReloadSetting
     {
-        //是否开启了手动reload
         public bool IsEnableManuallyReload;
+
+        private static string filePath;
+        public static string FilePath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(filePath))
+                {
+                    filePath = Application.dataPath + "/../ProjectSettings/ManuallyReloadSetting.asset";
+                }
+                return filePath;
+            }
+        }
+
+
+        private static ManuallyReloadSetting m_Instance;
+        public static ManuallyReloadSetting Instance
+        {
+            get
+            {
+                if (m_Instance == null)
+                {
+                    m_Instance = new ManuallyReloadSetting();
+                    try
+                    {
+                        JsonUtility.FromJsonOverwrite(File.ReadAllText(FilePath), m_Instance);
+                    }
+                    catch (System.Exception e)
+                    {
+                    }
+                }
+                return m_Instance;
+            }
+        }
 
         public void SetEnableManuallyReload(bool isEnable)
         {
             IsEnableManuallyReload = isEnable;
-            Save(true);
+            Save();
         }
-    }
+        private void Save()
+        {
+            File.WriteAllText(FilePath, JsonUtility.ToJson(this));
+        }
+    } 
+    #endregion
+
 
     public class SciptsProcessor : AssetModificationProcessor
     {
@@ -286,6 +332,5 @@ namespace Plugins.ManuallyReload
                 }
             }
         }
-       
     }
 }

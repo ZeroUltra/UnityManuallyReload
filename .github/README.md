@@ -63,6 +63,10 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 * 修改了数据保存代码逻辑
 * 修复新建脚本或者assembly的时候没有刷新的问题
 
+#### v1.0.3
+
+* 修复设置未保存的问题 (原来使用了Unity`ScriptableSingleton<T>`,使用过程中发现保存了数据但是加载的时候不会反序列化)
+
 ### 参考
 
 [Unity 关闭脚本编译 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/441996008)
