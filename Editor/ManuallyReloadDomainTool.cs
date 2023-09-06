@@ -17,8 +17,8 @@ namespace Plugins.ManuallyReload
          */
 
         const string menuEnableManualReload = "Tools/Reload Domain/开启手动Reload Domain";
-        const string menuDisenableManualReload ="Tools/Reload Domain/关闭手动Reload Domain";
-        const string menuRealodDomain ="Tools/Reload Domain/Unlock Reload %t";
+        const string menuDisenableManualReload = "Tools/Reload Domain/关闭手动Reload Domain";
+        const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload %t";
         const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
         const string kReloadDomainTimer = "ReloadDomainTimer";//计时
         const string logFormat = "<color=yellow>{0}</color>";
@@ -45,10 +45,6 @@ namespace Plugins.ManuallyReload
         static Stopwatch compileSW = new Stopwatch();
         //是否手动reload
         public static bool IsManuallyReload => ManuallyReloadSetting.Instance.IsEnableManuallyReload;
-
-        //判断是否进入了播放模式 每次域重载之后数据都会变回false 
-        //加这个原因是为了重置静态数据 https://docs.unity.cn/cn/2021.3/Manual/DomainReloading.html
-        static bool isEnterPlayFlag = false;
 
         //是否编译了
         static bool isNewCompile = false;
@@ -107,19 +103,16 @@ namespace Plugins.ManuallyReload
         {
             switch (state)
             {
+                //进入edit模式
                 case PlayModeStateChange.EnteredEditMode:
+                    //强制reload刷新静态数据
+                    ForceReloadDomain();
                     break;
                 //离开edit模式进入play模式
                 case PlayModeStateChange.ExitingEditMode:
-                    if (isEnterPlayFlag)
-                    {
-                        //强制加载重置静态数据
-                        ForceReloadDomain();
-                    }
                     break;
                 //进入play模式
                 case PlayModeStateChange.EnteredPlayMode:
-                    isEnterPlayFlag = true;
                     break;
                 case PlayModeStateChange.ExitingPlayMode:
                     break;
@@ -235,8 +228,8 @@ namespace Plugins.ManuallyReload
         {
             //if (EditorApplication.isCompiling)
             //{
-               // Debug.Log("unity is busy,wait a moment...");
-                //return;
+            // Debug.Log("unity is busy,wait a moment...");
+            //return;
             //}
             if (isNewCompile && IsManuallyReload)
             {
@@ -267,34 +260,22 @@ namespace Plugins.ManuallyReload
         public bool IsEnableManuallyReload;
 
         private static string filePath;
-        public static string FilePath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(filePath))
-                {
-                    filePath = Application.dataPath + "/../ProjectSettings/ManuallyReloadSetting.asset";
-                }
-                return filePath;
-            }
-        }
-
 
         private static ManuallyReloadSetting m_Instance;
         public static ManuallyReloadSetting Instance
         {
             get
             {
+                if (string.IsNullOrEmpty(filePath))
+                    filePath = Application.dataPath + "/../ProjectSettings/ManuallyReloadSetting.asset";
                 if (m_Instance == null)
                 {
                     m_Instance = new ManuallyReloadSetting();
                     try
                     {
-                        JsonUtility.FromJsonOverwrite(File.ReadAllText(FilePath), m_Instance);
+                        JsonUtility.FromJsonOverwrite(File.ReadAllText(filePath), m_Instance);
                     }
-                    catch (System.Exception e)
-                    {
-                    }
+                    catch (System.Exception e) { }
                 }
                 return m_Instance;
             }
@@ -307,9 +288,9 @@ namespace Plugins.ManuallyReload
         }
         private void Save()
         {
-            File.WriteAllText(FilePath, JsonUtility.ToJson(this));
+            File.WriteAllText(filePath, JsonUtility.ToJson(this));
         }
-    } 
+    }
     #endregion
 
 
@@ -320,14 +301,14 @@ namespace Plugins.ManuallyReload
         {
             //获取创建文件的类型
             string assetName = assetMeta.Replace(".meta", "");
-         
+
             //如果新建脚本或asm
             if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
             {
                 //如果是手动
                 if (ManuallyReloadDomainTool.IsManuallyReload)
                 {
-                    Debug.Log($"Force Reload, New File: {assetName}" );
+                    Debug.Log($"Force Reload, New File: {assetName}");
                     //强制reload domain
                     ManuallyReloadDomainTool.ForceReloadDomain();
                 }
