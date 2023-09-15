@@ -44,7 +44,7 @@ namespace Plugins.ManuallyReload
         //编译时间
         static Stopwatch compileSW = new Stopwatch();
         //是否手动reload
-        public static bool IsManuallyReload => ManuallyReloadSetting.Instance.IsEnableManuallyReload;
+        static bool IsManuallyReload => ManuallyReloadSetting.Instance.IsEnableManuallyReload;
 
         //是否编译了
         static bool isNewCompile = false;
@@ -306,7 +306,7 @@ namespace Plugins.ManuallyReload
             if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
             {
                 //如果是手动
-                if (ManuallyReloadDomainTool.IsManuallyReload)
+                if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
                 {
                     Debug.Log($"Force Reload, New File: {assetName}");
                     //强制reload domain
