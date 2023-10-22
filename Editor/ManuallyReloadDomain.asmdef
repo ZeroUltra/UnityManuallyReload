@@ -1,5 +1,5 @@
 {
-    "name": "NewAssembly",
+    "name": "ManuallyReloadDomain",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [
