@@ -5,6 +5,11 @@ using Debug = UnityEngine.Debug;
 using UnityEngine;
 using System.Reflection;
 using System.IO;
+using System.Collections.Generic;
+using System;
+using Assembly = UnityEditor.Compilation.Assembly;
+using UnityEngine.UIElements;
+using Plugins.ManuallyReload;
 
 namespace Plugins.ManuallyReload
 {
@@ -15,14 +20,14 @@ namespace Plugins.ManuallyReload
          * EditorApplication.LockReloadAssemblies()和 EditorApplication.UnlockReloadAssemblies() 成对
          * 如果不小心LockReloadAssemblies3次 但是只UnlockReloadAssemblies了一次 那么还是不会重载 必须也要但是只UnlockReloadAssemblies3次
          */
-
+        public const string logYellow = "<color=yellow>{0}</color>";
+        public const string logCyan = "<color=Cyan>{0}</color>";
+        public const string logWhite = "<color=White>{0}</color>";
         const string menuEnableManualReload = "Tools/Reload Domain/开启手动Reload Domain";
         const string menuDisenableManualReload = "Tools/Reload Domain/关闭手动Reload Domain";
         const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload %t";
-        const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity 
-        const string kReloadDomainTimer = "ReloadDomainTimer";//计时
-        const string logFormat = "<color=yellow>{0}</color>";
-
+        const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity
+        const string kReloadDomainTimer = "ReloadDomainTimer"; //计时
 
         //https://github.com/INeatFreak/unity-background-recompiler 来自这个库 反射获取是否锁住
         static MethodInfo CanReloadAssembliesMethod;
@@ -33,9 +38,14 @@ namespace Plugins.ManuallyReload
                 if (CanReloadAssembliesMethod == null)
                 {
                     // source: https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/EditorApplication.bindings.cs#L154
-                    CanReloadAssembliesMethod = typeof(EditorApplication).GetMethod("CanReloadAssemblies", BindingFlags.NonPublic | BindingFlags.Static);
+                    CanReloadAssembliesMethod = typeof(EditorApplication).GetMethod(
+                        "CanReloadAssemblies",
+                        BindingFlags.NonPublic | BindingFlags.Static
+                    );
                     if (CanReloadAssembliesMethod == null)
-                        Debug.LogError("Can't find CanReloadAssemblies method. It might have been renamed or removed.");
+                        Debug.LogError(
+                            "Can't find CanReloadAssemblies method. It might have been renamed or removed."
+                        );
                 }
                 return !(bool)CanReloadAssembliesMethod.Invoke(null, null);
             }
@@ -43,64 +53,46 @@ namespace Plugins.ManuallyReload
 
         //编译时间
         static Stopwatch compileSW = new Stopwatch();
-        //是否手动reload
-        static bool IsManuallyReload => ManuallyReloadSetting.Instance.IsEnableManuallyReload;
+
+
 
         //是否编译了
         static bool isNewCompile = false;
 
+        static List<string> listAssembly = new List<string>();
 
         [InitializeOnLoadMethod]
         static void Init()
         {
-            //**************监听编译 不需要的话可以注释************************
-            CompilationPipeline.compilationStarted -= OnCompilationStarted;
-            CompilationPipeline.compilationStarted += OnCompilationStarted;
-            CompilationPipeline.compilationFinished -= OnCompilationFinished;
-            CompilationPipeline.compilationFinished += OnCompilationFinished;
-            //**************************************************************
-
-            //域重载事件监听
-            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
-            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
-            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
-            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
-
-            //编辑器运行模式改变
-            //如果不需要自动重置数据请注释下面两行代码
-            EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
-            EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
-
-            InitMenu();
-        }
-
-
-        //首次打开检测
-        async static void InitMenu()
-        {
-            //必须要延迟下
-            await System.Threading.Tasks.Task.Delay(200);
-            //判断是否首次打开
-            //https://docs.unity.cn/cn/2021.3/ScriptReference/SessionState.html
             if (SessionState.GetBool(kFirstEnterUnity, true))
             {
                 SessionState.SetBool(kFirstEnterUnity, false);
-                Menu.SetChecked(menuEnableManualReload, IsManuallyReload ? true : false);
-                Menu.SetChecked(menuDisenableManualReload, IsManuallyReload ? false : true);
 
-                if (IsManuallyReload)
+                if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
                 {
                     UnlockReloadDomain();
                     LockRealodDomain();
                 }
-                Debug.LogFormat(logFormat, $"是否手动ReloadDomain : {IsManuallyReload}");
+                Debug.LogFormat(logCyan, $"是否手动ReloadDomain : {ManuallyReloadSetting.Instance.IsEnableManuallyReload}");
             }
-        }
 
+            CompilationPipeline.compilationStarted += OnCompilationStarted;
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
+            CompilationPipeline.assemblyCompilationFinished += EveryAssemblyCompilationFinished;
+
+            //域重载事件监听
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+
+            //编辑器运行模式改变
+            //如果不需要自动重置数据请注释下面代码
+            EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
+        }
 
         //运行模式改变
         static void EditorApplication_playModeStateChanged(PlayModeStateChange state)
         {
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
             switch (state)
             {
                 //进入edit模式
@@ -119,15 +111,14 @@ namespace Plugins.ManuallyReload
             }
         }
 
-
-        static void LockRealodDomain()
+        public static void LockRealodDomain()
         {
             //如果没有锁住 锁住
             if (!IsAssemblyLocked)
                 EditorApplication.LockReloadAssemblies();
         }
 
-        static void UnlockReloadDomain()
+        public static void UnlockReloadDomain()
         {
             //如果锁住了 打开
             if (IsAssemblyLocked)
@@ -139,28 +130,54 @@ namespace Plugins.ManuallyReload
         {
             UnlockReloadDomain();
             EditorUtility.RequestScriptReload();
-
         }
 
         #region AssembleCompile
+        //完成编译任何一个dll
+        private static void EveryAssemblyCompilationFinished(string assemblypath, CompilerMessage[] infos)
+        {
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
+            listAssembly.Add(assemblypath);
+        }
+
         //当开始编译脚本
         private static void OnCompilationStarted(object obj)
         {
-            if (IsManuallyReload)
-            {
-                compileSW.Start();
-                Debug.LogFormat(logFormat, "Beging Compile...");
-            }
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
+            listAssembly.Clear();
+            compileSW.Start();
+            Debug.LogFormat(logYellow, "Beging Compile...");
         }
 
         //结束编译
         private static void OnCompilationFinished(object obj)
         {
-            if (IsManuallyReload)
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
+
+            compileSW.Stop();
+            Debug.LogFormat(logYellow, $"End Compile :{compileSW.ElapsedMilliseconds} ms");
+            isNewCompile = true;
+
+            //编辑器代码不手动reload
+            if (!ManuallyReloadSetting.Instance.IsEditorUseManuallyReload)
             {
-                compileSW.Stop();
-                Debug.LogFormat(logFormat, $"End Compile :{compileSW.ElapsedMilliseconds} ms");
-                isNewCompile = true;
+                //获取所有编辑器dll
+                var listEditorAssemblys = new List<Assembly>(CompilationPipeline.GetAssemblies(AssembliesType.Editor));
+                for (int i = listEditorAssemblys.Count - 1; i >= 0; i--)
+                {
+                    if (listEditorAssemblys[i].flags != AssemblyFlags.EditorAssembly)
+                    {
+                        listEditorAssemblys.RemoveAt(i);
+                    }
+                }
+                //判断当前编译的dll是否是edior dll
+                bool result = listAssembly.TrueForAll(assemblyPath => listEditorAssemblys.Exists(editAss => editAss.outputPath == assemblyPath));
+                //如果都是编辑器代码
+                if (result)
+                {
+                    Debug.LogFormat(logWhite, "Editor Scripts Not Use Manually Reload,Force Reload......");
+                    ForceReloadDomain();
+                }
             }
         }
         #endregion
@@ -169,59 +186,26 @@ namespace Plugins.ManuallyReload
         //开始reload domain
         private static void OnBeforeAssemblyReload()
         {
-            if (IsManuallyReload)
-            {
-                Debug.LogFormat(logFormat, "Begin Reload Domain...");
-                //记录时间
-                SessionState.SetInt(kReloadDomainTimer, (int)(EditorApplication.timeSinceStartup * 1000));
-            }
-
+            Debug.LogFormat(logYellow, "Begin Reload Domain...");
+            //记录时间
+            SessionState.SetInt(
+                kReloadDomainTimer,
+                (int)(EditorApplication.timeSinceStartup * 1000)
+            );
         }
+
         //结束reload domain
         private static void OnAfterAssemblyReload()
         {
-            if (IsManuallyReload)
-            {
-                var timeMS = (int)(EditorApplication.timeSinceStartup * 1000) - SessionState.GetInt(kReloadDomainTimer, 0);
-                Debug.LogFormat(logFormat, $"End Reload Domain : {timeMS} ms");
-                LockRealodDomain();
-                isNewCompile = false;
-            }
+            var timeMS = (int)(EditorApplication.timeSinceStartup * 1000) - SessionState.GetInt(kReloadDomainTimer, 0);
+            Debug.LogFormat(logYellow, $"End Reload Domain : {timeMS} ms");
+            LockRealodDomain();
+            isNewCompile = false;
         }
         #endregion
 
         #region Menu
-        [MenuItem(menuEnableManualReload)]
-        static void EnableManuallyReloadDomain()
-        {
-            Debug.LogFormat(logFormat, "Enable Manually Reload Domain");
 
-            Menu.SetChecked(menuEnableManualReload, true);
-            Menu.SetChecked(menuDisenableManualReload, false);
-
-            //保存设置
-            ManuallyReloadSetting.Instance.SetEnableManuallyReload(true);
-
-            //编辑器设置 projectsetting->editor->enterPlayModeSetting
-            EditorSettings.enterPlayModeOptionsEnabled = true;
-            EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
-
-            LockRealodDomain();
-        }
-
-        [MenuItem(menuDisenableManualReload)]
-        static void DisenableManuallyReloadDomain()
-        {
-            Debug.LogFormat(logFormat, "Disable Manually Reload Domain");
-
-            Menu.SetChecked(menuEnableManualReload, false);
-            Menu.SetChecked(menuDisenableManualReload, true);
-
-            ManuallyReloadSetting.Instance.SetEnableManuallyReload(false);
-
-            UnlockReloadDomain();
-            EditorSettings.enterPlayModeOptionsEnabled = false;
-        }
         //手动刷新
         [MenuItem(menuRealodDomain)]
         static void ManualReload()
@@ -231,14 +215,13 @@ namespace Plugins.ManuallyReload
             // Debug.Log("unity is busy,wait a moment...");
             //return;
             //}
-            if (isNewCompile && IsManuallyReload)
+            if (isNewCompile && ManuallyReloadSetting.Instance.IsEnableManuallyReload)
             {
                 ForceReloadDomain();
             }
         }
         #endregion
     }
-
 
     #region 相关设置
     #region 废弃 垃圾
@@ -252,12 +235,16 @@ namespace Plugins.ManuallyReload
     //        IsEnableManuallyReload = isEnable;
     //        Save(true);
     //    }
-    //} 
+    //}
     #endregion
 
-    public class ManuallyReloadSetting
+    [System.Serializable]
+    public class ManuallyReloadSetting : ScriptableObject
     {
-        public bool IsEnableManuallyReload;
+        [Tooltip("是否启用手动Reload")]
+        public bool IsEnableManuallyReload = true;
+        [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑的所有代码属于Editor才会有效")]
+        public bool IsEditorUseManuallyReload;
 
         private static string filePath;
 
@@ -267,7 +254,8 @@ namespace Plugins.ManuallyReload
             get
             {
                 if (string.IsNullOrEmpty(filePath))
-                    filePath = Application.dataPath + "/../ProjectSettings/ManuallyReloadSetting.asset";
+                    filePath =
+                        Application.dataPath + "/../ProjectSettings/ManuallyReloadSettings.asset";
                 if (m_Instance == null)
                 {
                     m_Instance = new ManuallyReloadSetting();
@@ -281,19 +269,95 @@ namespace Plugins.ManuallyReload
             }
         }
 
-        public void SetEnableManuallyReload(bool isEnable)
+        public void Save()
         {
-            IsEnableManuallyReload = isEnable;
-            Save();
+            File.WriteAllText(filePath, JsonUtility.ToJson(this, true));
         }
-        private void Save()
+    }
+
+    // 注册到setting中
+    //https://docs.unity.cn/cn/2022.3/ScriptReference/SettingsProvider.html
+    static class ManuallyReloadRegisterToSetting
+    {
+        static GUIStyle iconStyle;
+        static SerializedObject so;
+        static SerializedProperty p_isEnableManuallyReload;
+        static SerializedProperty p_isEditorUseManuallyReload;
+        static GUIContent guicontentEnable = new GUIContent("Enable Manually Reload");
+        static GUIContent guicontentEditor = new GUIContent("Editor Scripts Use Manually Reload?");
+
+        [SettingsProvider]
+        public static SettingsProvider CreateMyManuallyReloadProvider()
         {
-            File.WriteAllText(filePath, JsonUtility.ToJson(this));
+            // First parameter is the path in the Settings window.
+            // Second parameter is the scope of this setting: it only appears in the Project Settings window.
+            var provider = new SettingsProvider("Project/ManuallyReload Setting", SettingsScope.Project)
+            {
+                // By default the last token of the path is used as display name if no label is provided.
+                label = "Manually Reload Setting",
+                titleBarGuiHandler = () =>
+                {
+                    if (iconStyle == null)
+                        iconStyle = GUI.skin.GetStyle("IconButton");
+                    if (GUILayout.Button(EditorGUIUtility.IconContent("_Help"), iconStyle))
+                    {
+                        Application.OpenURL("https://github.com/ZeroUltra/UnityManualReload");
+                    }
+                },
+                // Create the SettingsProvider and initialize its drawing (IMGUI) function in place:
+                guiHandler = (searchContext) =>
+                {
+                    EditorGUIUtility.labelWidth = 500;
+                    if (so == null)
+                    { 
+                        so = new SerializedObject(ManuallyReloadSetting.Instance);
+                        p_isEnableManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEnableManuallyReload));
+                        p_isEditorUseManuallyReload= so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
+                    }
+                    
+                    var settings = ManuallyReloadSetting.Instance;
+                    using (var check = new EditorGUI.ChangeCheckScope())
+                    {
+                        EditorGUILayout.PropertyField(p_isEnableManuallyReload, guicontentEnable);
+                        if (check.changed)
+                        {
+                            so.ApplyModifiedPropertiesWithoutUndo();
+                            settings.Save();
+                            Debug.LogFormat(ManuallyReloadDomainTool.logCyan, $"{(settings.IsEnableManuallyReload ? "Enable" : "Disable")} Manually Reload Domain");
+                            if (settings.IsEnableManuallyReload)
+                            {
+                                //编辑器设置 projectsetting->editor->enterPlayModeSetting
+                                EditorSettings.enterPlayModeOptionsEnabled = true;
+                                EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
+                                ManuallyReloadDomainTool.LockRealodDomain();
+                            }
+                            else
+                            {
+                                ManuallyReloadDomainTool.UnlockReloadDomain();
+                                EditorSettings.enterPlayModeOptionsEnabled = false;
+                            }
+                        }
+                    }
+                    using (var check = new EditorGUI.ChangeCheckScope())
+                    {
+                        EditorGUILayout.PropertyField(p_isEditorUseManuallyReload, guicontentEditor);
+                        if (check.changed)
+                        {
+                            so.ApplyModifiedPropertiesWithoutUndo();
+                            settings.Save();
+                        }
+                    }
+                },
+                // Populate the search keywords to enable smart search filtering and label highlighting:
+                keywords = new string[] { "Reload", "Manually" }
+            };
+
+            return provider;
         }
     }
     #endregion
 
-
+    //当资源导入
     public class SciptsProcessor : AssetModificationProcessor
     {
         //此函数在asset被创建，生成了.meta但没有导入完成之间调用
@@ -303,7 +367,11 @@ namespace Plugins.ManuallyReload
             string assetName = assetMeta.Replace(".meta", "");
 
             //如果新建脚本或asm
-            if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
+            if (
+                assetName.EndsWith(".cs")
+                || assetName.EndsWith(".asmdef")
+                || assetName.EndsWith(".asmref")
+            )
             {
                 //如果是手动
                 if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
@@ -314,5 +382,9 @@ namespace Plugins.ManuallyReload
                 }
             }
         }
+
     }
+
+    // Create MyCustomSettingsProvider by deriving from SettingsProvider:
+
 }

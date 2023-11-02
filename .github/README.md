@@ -69,6 +69,14 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 * 修复设置未保存的问题 (原来使用了Unity`ScriptableSingleton<T>`,使用过程中发现保存了数据但是加载的时候不会反序列化)
 
+#### v1.0.4
+
+* 将设置移到ProjectSetting中
+
+* 新增功能`编辑器代码是否手动Reload`
+
+  ![image-20231102201502323](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202311022015470.png)
+
 ### 参考
 
 [Unity 关闭脚本编译 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/441996008)
