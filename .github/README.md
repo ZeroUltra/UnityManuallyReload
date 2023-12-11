@@ -80,7 +80,7 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 #### v1.0.5
 
-* 修复bug: 当取消`EnableManuallyReload`勾选,编辑脚本不会reload
+* 修复当取消`EnableManuallyReload`勾选时,不会正确reload的bug
 
 ### 参考
 
