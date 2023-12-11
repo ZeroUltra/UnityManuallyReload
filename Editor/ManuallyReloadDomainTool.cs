@@ -23,9 +23,8 @@ namespace Plugins.ManuallyReload
         public const string logYellow = "<color=yellow>{0}</color>";
         public const string logCyan = "<color=Cyan>{0}</color>";
         public const string logWhite = "<color=White>{0}</color>";
-        const string menuEnableManualReload = "Tools/Reload Domain/开启手动Reload Domain";
-        const string menuDisenableManualReload = "Tools/Reload Domain/关闭手动Reload Domain";
-        const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload %t";
+
+        const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload %t"; //菜单 快捷键 ctrl+t
         const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity
         const string kReloadDomainTimer = "ReloadDomainTimer"; //计时
 

@@ -47,8 +47,8 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 ## 使用方法
 
-* 菜单栏`Tools/Reload Domain/Enable Manually Reload Domain`  开启手动reload
-* 需要手动reload 时候按下`Ctrl+t`快捷键,(或者直接点菜单)
+* 参考v1.0.4版本图
+* 需要手动reload 时候按下`Ctrl+t`快捷键,(或者直接点菜单,有需要改快捷键自行修改下代码即可)
 
 ## 更新日志
 
