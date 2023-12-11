@@ -188,10 +188,7 @@ namespace Plugins.ManuallyReload
         {
             Debug.LogFormat(logYellow, "Begin Reload Domain...");
             //记录时间
-            SessionState.SetInt(
-                kReloadDomainTimer,
-                (int)(EditorApplication.timeSinceStartup * 1000)
-            );
+            SessionState.SetInt(kReloadDomainTimer, (int)(EditorApplication.timeSinceStartup * 1000));
         }
 
         //结束reload domain
@@ -199,7 +196,8 @@ namespace Plugins.ManuallyReload
         {
             var timeMS = (int)(EditorApplication.timeSinceStartup * 1000) - SessionState.GetInt(kReloadDomainTimer, 0);
             Debug.LogFormat(logYellow, $"End Reload Domain : {timeMS} ms");
-            LockRealodDomain();
+            if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
+                LockRealodDomain();
             isNewCompile = false;
         }
         #endregion
@@ -309,12 +307,12 @@ namespace Plugins.ManuallyReload
                 {
                     EditorGUIUtility.labelWidth = 500;
                     if (so == null)
-                    { 
+                    {
                         so = new SerializedObject(ManuallyReloadSetting.Instance);
                         p_isEnableManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEnableManuallyReload));
-                        p_isEditorUseManuallyReload= so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
+                        p_isEditorUseManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
                     }
-                    
+
                     var settings = ManuallyReloadSetting.Instance;
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
@@ -333,7 +331,8 @@ namespace Plugins.ManuallyReload
                             }
                             else
                             {
-                                ManuallyReloadDomainTool.UnlockReloadDomain();
+                                Debug.Log("Disable reload");
+                                ManuallyReloadDomainTool.ForceReloadDomain();
                                 EditorSettings.enterPlayModeOptionsEnabled = false;
                             }
                         }

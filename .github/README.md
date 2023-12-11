@@ -76,6 +76,11 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 * 新增功能`编辑器代码是否手动Reload`
 
   ![image-20231102201502323](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202311022015470.png)
+  
+
+#### v1.0.5
+
+* 修复bug: 当取消`EnableManuallyReload`勾选,编辑脚本不会reload
 
 ### 参考
 
