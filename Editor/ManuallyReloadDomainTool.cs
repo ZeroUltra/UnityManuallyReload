@@ -284,7 +284,6 @@ namespace Plugins.ManuallyReload
                     if (GUILayout.Button(EditorGUIUtility.IconContent("_Help"), iconStyle))
                         Application.OpenURL("https://github.com/ZeroUltra/UnityManualReload");
                 },
-
                 // Create the SettingsProvider and initialize its drawing (IMGUI) function in place:
                 guiHandler = (searchContext) =>
                 {
