@@ -20,7 +20,7 @@ Unity2021(2020还好)不知是哪个版本,明显感觉编译reload时间冗长�
 
 Unity有个Enter Play Mode Setting  [可配置的进入运行模式 - Unity 手册](https://docs.unity.cn/cn/2021.3/Manual/ConfigurableEnterPlayMode.html)
 
-![image-20221105210343196](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202211052103211.png)
+ ![](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202211052103211.png)
 
 禁用`Reload Domain` 可以快速进入播放模式.但是每次修改完脚本还是会重新reload. 还有就是对于`静态数据如果没有重新reload 还是会保持之前的数据`(**建议不要禁用,真的很坑**) 具体查看:https://docs.unity.cn/cn/2021.3/Manual/DomainReloading.html
 
@@ -81,6 +81,17 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 #### v1.0.5
 
 * 修复当取消`EnableManuallyReload`勾选时,不会正确reload的bug
+
+#### v1.0.6
+
+* 添加说明
+* 如遇到锁住问题 按下Ctrl+Alt+T强制重载
+
+ ![image-20231227195442245](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202312271954071.png)
+
+
+
+`有什么问题,欢迎提Issues`
 
 ### 参考
 
