@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using Assembly = UnityEditor.Compilation.Assembly;
 using Debug = UnityEngine.Debug;
 using AssemblyFlags = UnityEditor.Compilation.AssemblyFlags;
-using UnityEditor.VersionControl;
 
 namespace Plugins.ManuallyReload
 {
@@ -323,14 +322,11 @@ namespace Plugins.ManuallyReload
                             settings.Save();
                         }
                     }
-
                     EditorGUILayout.HelpBox("脚本编译之后,按下 Ctrl+T 进行重载(Realod Domain)\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题)\n按下 Ctrl+Alt+T 强制进行重载", MessageType.Info);
-
                 },
                 // Populate the search keywords to enable smart search filtering and label highlighting:
                 keywords = new string[] { "Reload", "Manually" }
             };
-
             return provider;
         }
     }
