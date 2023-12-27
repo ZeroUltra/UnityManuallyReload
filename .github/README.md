@@ -4,8 +4,6 @@
 
 Unity2021(2020还好)不知是哪个版本,明显感觉编译reload时间冗长🥱😪😯
 
-
-
 ## 在Unity中遇到的问题
 
 在unity工作流中,`修改脚本->编译脚本->reload domain(重载域)->进入play`
@@ -47,14 +45,13 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 ## 使用方法
 
-* 菜单栏`Tools/Reload Domain/Enable Manually Reload Domain`  开启手动reload
-* 需要手动reload 时候按下`Ctrl+t`快捷键,(或者直接点菜单)
+* 参考v1.0.4版本图
+* 开启之后,新建脚本,修改脚本或者导入插件的时候,手动reload 一下
+* 需要手动reload 时候按下`Ctrl+t`快捷键,(或者直接点菜单,有需要改快捷键自行修改下代码即可)
 
 ## 更新日志
 
 #### v1.0.1
-
-`如果开启,新建脚本或者导入插件的时候,都手动reload 一下`
 
 * 每次进入play模式之前,会检查是否需要reload,已经reload就不用了,没有的话自动reload,这样能保证每次数据的正确性
 
