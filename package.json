@@ -7,5 +7,8 @@
   "changelogUrl": "https://github.com/ZeroUltra/UnityManualReload",
   "licensesUrl": "https://github.com/ZeroUltra/UnityManualReload",
   "hideInEditor": false,
-  "keywords": ["ReloadDomain"]
+  "keywords": ["ReloadDomain"],
+  "author": {
+    "name": "ZeroUltra"
+  }
 }

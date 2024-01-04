@@ -234,7 +234,7 @@ namespace Plugins.ManuallyReload
                     filePath = Application.dataPath + "/../ProjectSettings/ManuallyReloadSettings.asset";
                 if (m_Instance == null)
                 {
-                    m_Instance = new ManuallyReloadSetting();
+                    m_Instance = ScriptableObject.CreateInstance<ManuallyReloadSetting>();
                     try
                     {
                         JsonUtility.FromJsonOverwrite(File.ReadAllText(filePath), m_Instance);
