@@ -47,11 +47,15 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 ## 使用方法
 
-\* Unity中`Edit->ProjectSetting->Manually Reload Domain` 参考v1.0.4版本图
-* 开启之后,新建脚本,修改脚本或者导入插件的时候,只会编译而不会reload。通过`Ctrl+T`或者菜单`Tools/Reload Domain/Unlock Reload`,手动reload
-* 记住，Unity必须reload之后，才能调用相关域。例如新建mono脚本如果不reload是挂不到gameobject上的
-* 开启完全手动模式之后，除了手动reload和在重新编译代码进入play模式自动reload,其他任何时候都不会reload。
-* 如遇到锁住问题（unity左下角一直出现🔒的情况） 按下Ctrl+Alt+T强制重载。
+1. Unity中`Edit->ProjectSetting->Manually Reload Domain` 参考v1.0.4版本图
+
+2. 开启之后,新建脚本,修改脚本或者导入插件的时候,只会编译而不会reload。通过`Ctrl+T`或者菜单`Tools/Reload Domain/Unlock Reload`,手动reload
+
+3. 记住，Unity必须reload之后，才能调用相关域。例如新建mono脚本如果不reload是挂不到gameobject上的
+
+4. 开启完全手动模式之后，除了手动reload和在重新编译代码进入play模式自动reload,其他任何时候都不会reload。
+
+5. 如遇到锁住问题（unity左下角一直出现🔒的情况） 按下Ctrl+Alt+T强制重载。
 
 
 
