@@ -86,6 +86,12 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
  ![image-20231227195442245](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202312271954071.png)
 
+v 1.0.7
+
+* 添加完全手动模式。启用此选项后，不会在运行结束后强制reload domain来重置static数据。会更快的进入|退出播放模式。
+
+ ![image-20240115235432167](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202401152354322.png)
+
 
 
 `有什么问题,欢迎提Issues`

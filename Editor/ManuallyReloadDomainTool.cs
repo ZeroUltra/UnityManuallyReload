@@ -36,7 +36,7 @@ namespace Plugins.ManuallyReload
                 if (CanReloadAssembliesMethod == null)
                 {
                     // source: https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/EditorApplication.bindings.cs#L154
-                    CanReloadAssembliesMethod = typeof(EditorApplication).GetMethod("CanReloadAssemblies",BindingFlags.NonPublic | BindingFlags.Static);
+                    CanReloadAssembliesMethod = typeof(EditorApplication).GetMethod("CanReloadAssemblies", BindingFlags.NonPublic | BindingFlags.Static);
                     if (CanReloadAssembliesMethod == null)
                         Debug.LogError("Can't find CanReloadAssemblies method. It might have been renamed or removed.");
                 }
@@ -104,22 +104,11 @@ namespace Plugins.ManuallyReload
         //运行模式改变
         static void EditorApplication_playModeStateChanged(PlayModeStateChange state)
         {
-            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
-            switch (state)
+            //如果没有开启 或者 是完全手动模式直接return
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload || ManuallyReloadSetting.Instance.IsFullyManuallyReload) return;
+            if (state == PlayModeStateChange.EnteredEditMode)
             {
-                //进入edit模式
-                case PlayModeStateChange.EnteredEditMode:
-                    //强制reload刷新静态数据
-                    ForceReloadDomain();
-                    break;
-                //离开edit模式进入play模式
-                case PlayModeStateChange.ExitingEditMode:
-                    break;
-                //进入play模式
-                case PlayModeStateChange.EnteredPlayMode:
-                    break;
-                case PlayModeStateChange.ExitingPlayMode:
-                    break;
+                ForceReloadDomain();
             }
         }
 
@@ -220,6 +209,8 @@ namespace Plugins.ManuallyReload
     {
         [Tooltip("是否启用手动Reload")]
         public bool IsEnableManuallyReload = true;
+        [Tooltip("完全手动Reload")]
+        public bool IsFullyManuallyReload = false;
         [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑的所有代码属于Editor才会有效")]
         public bool IsEditorUseManuallyReload;
 
@@ -258,18 +249,17 @@ namespace Plugins.ManuallyReload
         static GUIStyle iconStyle;
         static SerializedObject so;
         static SerializedProperty p_isEnableManuallyReload;
+        static SerializedProperty p_isFullyManuallyReload;
         static SerializedProperty p_isEditorUseManuallyReload;
         static GUIContent guicontentEnable = new GUIContent("Enable Manually Reload");
+        static GUIContent guicontentFullyManually = new GUIContent("Enable Fully Manually Reload");
         static GUIContent guicontentEditor = new GUIContent("Editor Scripts Use Manually Reload?");
 
         [SettingsProvider]
         public static SettingsProvider CreateMyManuallyReloadProvider()
         {
-            // First parameter is the path in the Settings window.
-            // Second parameter is the scope of this setting: it only appears in the Project Settings window.
             var provider = new SettingsProvider("Project/ManuallyReload Setting", SettingsScope.Project)
             {
-                // By default the last token of the path is used as display name if no label is provided.
                 label = "Manually Reload Setting",
                 titleBarGuiHandler = () =>
                 {
@@ -286,6 +276,7 @@ namespace Plugins.ManuallyReload
                     {
                         so = new SerializedObject(ManuallyReloadSetting.Instance);
                         p_isEnableManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEnableManuallyReload));
+                        p_isFullyManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsFullyManuallyReload));
                         p_isEditorUseManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
                     }
                     var settings = ManuallyReloadSetting.Instance;
@@ -314,7 +305,19 @@ namespace Plugins.ManuallyReload
                     }
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
-                        EditorGUILayout.PropertyField(p_isEditorUseManuallyReload, guicontentEditor);
+                        using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
+                            EditorGUILayout.PropertyField(p_isFullyManuallyReload, guicontentFullyManually);
+                        if (check.changed)
+                        {
+                            so.ApplyModifiedPropertiesWithoutUndo();
+                            settings.Save();
+                        }
+                    }
+                    using (var check = new EditorGUI.ChangeCheckScope())
+                    {
+                        using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
+                            EditorGUILayout.PropertyField(p_isEditorUseManuallyReload, guicontentEditor);
+
                         if (check.changed)
                         {
                             so.ApplyModifiedPropertiesWithoutUndo();
