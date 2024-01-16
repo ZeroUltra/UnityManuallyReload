@@ -52,6 +52,7 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 3. 记住，Unity必须reload之后，才能调用相关域。例如新建mono脚本如果不reload是挂不到gameobject上的。
 4. 当刚进入Play模式如果已经reload，则直接进入；如果没有reload则会强制reload（主要是为了重置static数据）
 5. 如遇到锁住问题（unity左下角一直出现🔒的情况） 按下Ctrl+Alt+T强制重载。
+6. 完全手动模式下，不会执行相关自动reload，需要手动reload
 
 ## 更新日志
 
@@ -90,7 +91,11 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
  ![image-20231227195442245](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202312271954071.png)
 
+#### v1.0.7
 
+* 添加完全手动模式。开启此模式后，需要完全手动reload。
+
+ ![](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202401152354322.png)
 
 `有什么问题,欢迎提Issues`
 

@@ -108,7 +108,7 @@ namespace Plugins.ManuallyReload
         {
             //如果没有开启 或者 是完全手动模式直接return
             if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
-           // if (ManuallyReloadSetting.Instance.IsFullyManuallyReload) return;
+            if (ManuallyReloadSetting.Instance.IsFullyManuallyReload) return;
             switch (state)
             {
                 case PlayModeStateChange.ExitingEditMode:
@@ -224,8 +224,8 @@ namespace Plugins.ManuallyReload
     {
         [Tooltip("是否启用手动Reload")]
         public bool IsEnableManuallyReload = true;
-       // [Tooltip("完全手动Reload")]
-       // public bool IsFullyManuallyReload = false;
+        [Tooltip("完全手动Reload")]
+        public bool IsFullyManuallyReload = false;
         [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑的所有代码属于Editor才会有效")]
         public bool IsEditorUseManuallyReload;
 
@@ -264,7 +264,7 @@ namespace Plugins.ManuallyReload
         static GUIStyle iconStyle;
         static SerializedObject so;
         static SerializedProperty p_isEnableManuallyReload;
-        //static SerializedProperty p_isFullyManuallyReload;
+        static SerializedProperty p_isFullyManuallyReload;
         static SerializedProperty p_isEditorUseManuallyReload;
         static GUIContent guicontentEnable = new GUIContent("Enable Manually Reload");
         static GUIContent guicontentFullyManually = new GUIContent("Enable Fully Manually Reload");
@@ -291,7 +291,7 @@ namespace Plugins.ManuallyReload
                     {
                         so = new SerializedObject(ManuallyReloadSetting.Instance);
                         p_isEnableManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEnableManuallyReload));
-                       // p_isFullyManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsFullyManuallyReload));
+                        p_isFullyManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsFullyManuallyReload));
                         p_isEditorUseManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
                     }
                     var settings = ManuallyReloadSetting.Instance;
@@ -318,16 +318,16 @@ namespace Plugins.ManuallyReload
                             }
                         }
                     }
-                    //using (var check = new EditorGUI.ChangeCheckScope())
-                    //{
-                    //    using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
-                    //        EditorGUILayout.PropertyField(p_isFullyManuallyReload, guicontentFullyManually);
-                    //    if (check.changed)
-                    //    {
-                    //        so.ApplyModifiedPropertiesWithoutUndo();
-                    //        settings.Save();
-                    //    }
-                    //}
+                    using (var check = new EditorGUI.ChangeCheckScope())
+                    {
+                        using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
+                            EditorGUILayout.PropertyField(p_isFullyManuallyReload, guicontentFullyManually);
+                        if (check.changed)
+                        {
+                            so.ApplyModifiedPropertiesWithoutUndo();
+                            settings.Save();
+                        }
+                    }
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
                         using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
