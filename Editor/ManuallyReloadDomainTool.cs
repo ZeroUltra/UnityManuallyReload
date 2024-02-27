@@ -223,7 +223,7 @@ namespace Plugins.ManuallyReload
     public class ManuallyReloadSetting : ScriptableObject
     {
         [Tooltip("是否启用手动Reload")]
-        public bool IsEnableManuallyReload = true;
+        public bool IsEnableManuallyReload = false;
         [Tooltip("完全手动Reload")]
         public bool IsFullyManuallyReload = false;
         [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑的所有代码属于Editor才会有效")]
