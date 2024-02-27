@@ -54,6 +54,12 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 5. 如遇到锁住问题（unity右下角一直出现🔒的情况） 按下Ctrl+Alt+T强制重载。
 6. 完全手动模式下，不会执行相关自动reload，需要手动reload
 
+需要注意的一点:
+
+​	当勾选`Enable Manually Reload`的时候会自动设置`Enter play mode setting`,如果由于其他操作重新设置了 enter play mode setting,请手动设置成下图正确选项,或者重新勾选`Enable Manually Reload`进行自动设置.
+
+​	![image-20240228000722436](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202402280007905.png)
+
 ## 更新日志
 
 #### v1.0.1
