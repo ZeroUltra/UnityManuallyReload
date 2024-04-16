@@ -84,15 +84,9 @@ namespace Plugins.ManuallyReload
         [MenuItem(menuRealodDomain)]
         static void ManualReload()
         {
-            //if (EditorApplication.isCompiling)
-            //{
-            //Debug.Log("unity is busy,wait a moment...");
-            //return;
-            //}
             if (isNewCompile && ManuallyReloadSetting.Instance.IsEnableManuallyReload)
             {
                 ForceReloadDomain();
-
             }
         }
         //强制刷新
@@ -339,7 +333,7 @@ namespace Plugins.ManuallyReload
                             settings.Save();
                         }
                     }
-                   EditorGUILayout.HelpBox("脚本编译之后,按下 Ctrl+T 进行重载(Realod Domain)\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题)\n按下 Ctrl+Alt+T 强制进行重载", MessageType.Warning);
+                    EditorGUILayout.HelpBox("脚本编译之后,按下 Ctrl+T 进行重载(Realod Domain)\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题)\n按下 Ctrl+Alt+T 强制进行重载", MessageType.Warning);
                 },
                 keywords = new string[] { "Reload", "Manually" }
             };
@@ -349,26 +343,25 @@ namespace Plugins.ManuallyReload
     #endregion
 
     //当资源导入
-    public class SciptsProcessor : AssetModificationProcessor
+    public class ScriptsProcessor : AssetModificationProcessor
     {
-        //此函数在asset被创建，生成了.meta但没有导入完成之间调用
-        static void OnWillCreateAsset(string assetMeta)
+        const string metaExtension = ".meta";
+        static void OnWillCreateAsset(string assetName)
         {
-            //获取创建文件的类型
-            string assetName = assetMeta.Replace(".meta", "");
-
-            //如果新建脚本或asm
-            if (assetName.EndsWith(".cs")
-                || assetName.EndsWith(".asmdef")
-                || assetName.EndsWith(".asmref")
-            )
+            if (Path.GetExtension(assetName) == metaExtension)
             {
-                //如果是手动
-                if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
+                //获取创建文件的类型
+                assetName = assetName.Replace(metaExtension, "");
+                //如果新建脚本或asm
+                if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
                 {
-                    Debug.Log($"Force Reload, New File: {assetName}");
-                    //强制reload domain
-                    ManuallyReloadDomainTool.ForceReloadDomain();
+                    //如果是手动
+                    if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
+                    {
+                        Debug.Log($"Force Reload, New File: {assetName}");
+                        //强制reload domain
+                        ManuallyReloadDomainTool.ForceReloadDomain();
+                    }
                 }
             }
         }
