@@ -22,8 +22,8 @@ namespace Plugins.ManuallyReload
         public const string logCyan = "<color=Cyan>{0}</color>";
         public const string logWhite = "<color=White>{0}</color>";
 
-        const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload %t"; //菜单快捷键 ctrl+t
-        const string menuForceRealodDomain = "Tools/Reload Domain/Force Unlock Reload %&t"; //菜单快捷键(强制重新reload) ctrl+alt+t
+        const string menuRealodDomain = "Tools/Reload Domain/Unlock Reload _F5"; //菜单快捷键 f5
+        const string menuForceRealodDomain = "Tools/Reload Domain/Force Unlock Reload %t"; //菜单快捷键(强制重新reload) ctrl+t
         const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity
         const string kReloadDomainTimer = "ReloadDomainTimer"; //计时
 
@@ -333,7 +333,7 @@ namespace Plugins.ManuallyReload
                             settings.Save();
                         }
                     }
-                    EditorGUILayout.HelpBox("脚本编译之后,按下 Ctrl+T 进行重载(Realod Domain)\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题)\n按下 Ctrl+Alt+T 强制进行重载", MessageType.Warning);
+                    EditorGUILayout.HelpBox("脚本编译之后,按下 F5 进行重载(Realod Domain)\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题)\n按下 Ctrl+T 强制进行重载", MessageType.Warning);
                 },
                 keywords = new string[] { "Reload", "Manually" }
             };
