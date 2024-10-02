@@ -6,7 +6,7 @@
   "documentationUrl": "https://github.com/ZeroUltra/UnityManualReload",
   "changelogUrl": "https://github.com/ZeroUltra/UnityManualReload",
   "licensesUrl": "https://github.com/ZeroUltra/UnityManualReload",
-  "hideInEditor": false,
+  "hideInEditor": true,
   "keywords": [
     "ReloadDomain"
   ],
