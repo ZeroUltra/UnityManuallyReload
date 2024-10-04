@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Assembly = UnityEditor.Compilation.Assembly;
 using Debug = UnityEngine.Debug;
 using AssemblyFlags = UnityEditor.Compilation.AssemblyFlags;
+using System;
 
 namespace Plugins.ManuallyReload
 {
@@ -63,16 +64,16 @@ namespace Plugins.ManuallyReload
                     UnlockReloadDomain();
                     LockRealodDomain();
                 }
-                Debug.LogFormat(logCyan, $"是否手动ReloadDomain : {ManuallyReloadSetting.Instance.IsEnableManuallyReload}");
+                string state = ManuallyReloadSetting.Instance.IsEnableManuallyReload ? "Enable Manually Reload !" : "Disable Manually Reload !";
+                Debug.LogFormat(logCyan, state);
             }
-
             CompilationPipeline.compilationStarted += OnCompilationStarted;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.assemblyCompilationFinished += EveryAssemblyCompilationFinished;
 
             //域重载事件监听
-            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
-            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeDomainReload;
+            AssemblyReloadEvents.afterAssemblyReload += OnAfterDomainReload;
 
             //编辑器运行模式改变
             //如果不需要自动重置数据请注释下面代码
@@ -93,7 +94,8 @@ namespace Plugins.ManuallyReload
         [MenuItem(menuForceRealodDomain)]
         static void MenuForceReloadDomain()
         {
-            ForceReloadDomain();
+            if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
+                ForceReloadDomain();
         }
         #endregion
 
@@ -183,7 +185,7 @@ namespace Plugins.ManuallyReload
                 //如果都是编辑器代码
                 if (result)
                 {
-                    Debug.LogFormat(logWhite, "Editor Scripts Not Use Manually Reload,Force Reload......");
+                    Debug.LogFormat(logWhite, "[IsEditorUseManuallyReload=false]   Force Reload......");
                     ForceReloadDomain();
                 }
             }
@@ -192,16 +194,18 @@ namespace Plugins.ManuallyReload
 
         #region ReloadDomain
         //开始reload domain
-        private static void OnBeforeAssemblyReload()
+        private static void OnBeforeDomainReload()
         {
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
             Debug.LogFormat(logYellow, "Begin Reload Domain...");
-            //记录时间
+            //记录时间 由于
             SessionState.SetInt(kReloadDomainTimer, (int)(EditorApplication.timeSinceStartup * 1000));
         }
 
         //结束reload domain
-        private static void OnAfterAssemblyReload()
+        private static void OnAfterDomainReload()
         {
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
             var timeMS = (int)(EditorApplication.timeSinceStartup * 1000) - SessionState.GetInt(kReloadDomainTimer, 0);
             Debug.LogFormat(logYellow, $"End Reload Domain : {timeMS} ms");
             if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
@@ -216,12 +220,18 @@ namespace Plugins.ManuallyReload
     [System.Serializable]
     public class ManuallyReloadSetting : ScriptableObject
     {
+        [Space(5)]
+      //  [Header("Main Setting")]
         [Tooltip("是否启用手动Reload")]
         public bool IsEnableManuallyReload = false;
-        [Tooltip("完全手动Reload")]
+        [Tooltip("完全手动Reload(指不会在运行前检测是否需要reload),需完全手动触发")]
         public bool IsFullyManuallyReload = false;
-        [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑的所有代码属于Editor才会有效")]
+        [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑Editor代码才有效")]
         public bool IsEditorUseManuallyReload;
+
+        //[Header("Other Setting (Optional)")]
+        //[Tooltip("显示编译和Reload耗时日志")]
+        //public bool ShowCompilationAndReloadLog = true;
 
         private static string filePath;
 
@@ -260,10 +270,13 @@ namespace Plugins.ManuallyReload
         static SerializedProperty p_isEnableManuallyReload;
         static SerializedProperty p_isFullyManuallyReload;
         static SerializedProperty p_isEditorUseManuallyReload;
-        static GUIContent guicontentEnable = new GUIContent("Enable Manually Reload");
-        static GUIContent guicontentFullyManually = new GUIContent("Enable Fully Manually Reload");
-        static GUIContent guicontentEditor = new GUIContent("Editor Scripts Use Manually Reload?");
+        //  static SerializedProperty p_ShowCompilationAndReloadLog;
 
+        static GUIContent guiContentEnable = new GUIContent(" Enable Manually Reload", EditorGUIUtility.IconContent("Refresh").image);
+        static GUIContent guiContentFullyManually = new GUIContent(" Enable Fully Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
+        static GUIContent guiContentEditor = new GUIContent(" Editor Scripts Manually Reload?", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
+        //static GUIContent guiContentShowLog = new GUIContent(" Show Compilation And Reload Log", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
+        static GUIStyle guiLabel = EditorStyles.boldLabel;
         [SettingsProvider]
         public static SettingsProvider CreateMyManuallyReloadProvider()
         {
@@ -277,7 +290,6 @@ namespace Plugins.ManuallyReload
                     if (GUILayout.Button(EditorGUIUtility.IconContent("_Help"), iconStyle))
                         Application.OpenURL("https://github.com/ZeroUltra/UnityManualReload");
                 },
-                // Create the SettingsProvider and initialize its drawing (IMGUI) function in place:
                 guiHandler = (searchContext) =>
                 {
                     EditorGUIUtility.labelWidth = 500;
@@ -287,57 +299,63 @@ namespace Plugins.ManuallyReload
                         p_isEnableManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEnableManuallyReload));
                         p_isFullyManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsFullyManuallyReload));
                         p_isEditorUseManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
+                        // p_ShowCompilationAndReloadLog = so.FindProperty(nameof(ManuallyReloadSetting.Instance.ShowCompilationAndReloadLog));
                     }
                     var settings = ManuallyReloadSetting.Instance;
                     using (var check = new EditorGUI.ChangeCheckScope())
                     {
-                        EditorGUILayout.PropertyField(p_isEnableManuallyReload, guicontentEnable);
+                        EditorGUILayout.PropertyField(p_isEnableManuallyReload, guiContentEnable);
                         if (check.changed)
                         {
                             so.ApplyModifiedPropertiesWithoutUndo();
                             settings.Save();
-                            Debug.LogFormat(ManuallyReloadDomainTool.logCyan, $"{(settings.IsEnableManuallyReload ? "Enable" : "Disable")} Manually Reload Domain");
                             if (settings.IsEnableManuallyReload)
                             {
                                 //编辑器设置 projectsetting->editor->enterPlayModeSetting
+                                Debug.LogFormat(ManuallyReloadDomainTool.logCyan, "Enable Manually Reload !");
                                 EditorSettings.enterPlayModeOptionsEnabled = true;
                                 EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
                                 ManuallyReloadDomainTool.LockRealodDomain();
                             }
                             else
                             {
-                                Debug.Log("Disable reload");
+                                Debug.LogFormat(ManuallyReloadDomainTool.logCyan, "Disable Manually Reload !");
                                 ManuallyReloadDomainTool.ForceReloadDomain();
                                 EditorSettings.enterPlayModeOptionsEnabled = false;
                             }
                         }
                     }
-                    using (var check = new EditorGUI.ChangeCheckScope())
-                    {
-                        using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
-                            EditorGUILayout.PropertyField(p_isFullyManuallyReload, guicontentFullyManually);
-                        if (check.changed)
-                        {
-                            so.ApplyModifiedPropertiesWithoutUndo();
-                            settings.Save();
-                        }
-                    }
-                    using (var check = new EditorGUI.ChangeCheckScope())
-                    {
-                        using (new EditorGUI.DisabledScope(!p_isEnableManuallyReload.boolValue))
-                            EditorGUILayout.PropertyField(p_isEditorUseManuallyReload, guicontentEditor);
+                    GUISerializedPropertyBool(p_isFullyManuallyReload, !p_isEnableManuallyReload.boolValue, guiContentFullyManually);
+                    GUISerializedPropertyBool(p_isEditorUseManuallyReload, !p_isEnableManuallyReload.boolValue, guiContentEditor);
+                    //GUISerializedPropertyBool(p_ShowCompilationAndReloadLog, false, guiContentShowLog);
 
-                        if (check.changed)
-                        {
-                            so.ApplyModifiedPropertiesWithoutUndo();
-                            settings.Save();
-                        }
-                    }
-                    EditorGUILayout.HelpBox("脚本编译之后,按下 F5 进行重载(Realod Domain)\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题)\n按下 Ctrl+T 强制进行重载", MessageType.Warning);
+                    GUILayout.Space(10);
+                    //EditorGUILayout.HelpBox("脚本编译之后,按下 F5 进行重载(Realod Domain)" +
+                    //                        "\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题) 按下 Ctrl+T 强制进行重载", MessageType.Warning);
+                    guiLabel.richText = true;
+                    GUI.DrawTexture(new Rect(425, 107, 22, 22), EditorGUIUtility.IconContent("Locked").image);
+                    GUILayout.Box(new GUIContent($"脚本编译之后，按下 <color=red>F5</color> 进行重载(Realod Domain)" +
+                                                          $"\n\n如遇编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载(Unity编辑器右下角始终为 <color=yellow>[锁]    </color> 状态时)" +
+                                                          $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), GUILayout.MinWidth(520));
                 },
                 keywords = new string[] { "Reload", "Manually" }
             };
             return provider;
+        }
+
+        private static void GUISerializedPropertyBool(SerializedProperty serializedProperty, bool disable, GUIContent guiContent)
+        {
+            using (var check = new EditorGUI.ChangeCheckScope())
+            {
+                using (new EditorGUI.DisabledScope(disable))
+                    EditorGUILayout.PropertyField(serializedProperty, guiContent);
+
+                if (check.changed)
+                {
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                    ManuallyReloadSetting.Instance.Save();
+                }
+            }
         }
     }
     #endregion
