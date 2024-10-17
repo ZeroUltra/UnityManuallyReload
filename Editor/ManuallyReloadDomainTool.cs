@@ -221,7 +221,7 @@ namespace Plugins.ManuallyReload
     public class ManuallyReloadSetting : ScriptableObject
     {
         [Space(5)]
-      //  [Header("Main Setting")]
+        //  [Header("Main Setting")]
         [Tooltip("是否启用手动Reload")]
         public bool IsEnableManuallyReload = false;
         [Tooltip("完全手动Reload(指不会在运行前检测是否需要reload),需完全手动触发")]
@@ -266,6 +266,7 @@ namespace Plugins.ManuallyReload
     static class ManuallyReloadRegisterToSetting
     {
         static GUIStyle iconStyle;
+        static GUIStyle boxStyle;
         static SerializedObject so;
         static SerializedProperty p_isEnableManuallyReload;
         static SerializedProperty p_isFullyManuallyReload;
@@ -276,7 +277,6 @@ namespace Plugins.ManuallyReload
         static GUIContent guiContentFullyManually = new GUIContent(" Enable Fully Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
         static GUIContent guiContentEditor = new GUIContent(" Editor Scripts Manually Reload?", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
         //static GUIContent guiContentShowLog = new GUIContent(" Show Compilation And Reload Log", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
-        static GUIStyle guiLabel = EditorStyles.boldLabel;
         [SettingsProvider]
         public static SettingsProvider CreateMyManuallyReloadProvider()
         {
@@ -287,6 +287,12 @@ namespace Plugins.ManuallyReload
                 {
                     if (iconStyle == null)
                         iconStyle = GUI.skin.GetStyle("IconButton");
+                    if (boxStyle == null)
+                    {
+                        boxStyle = GUI.skin.box;
+                        boxStyle.richText = true;
+                        boxStyle.alignment = TextAnchor.MiddleLeft;
+                    }
                     if (GUILayout.Button(EditorGUIUtility.IconContent("_Help"), iconStyle))
                         Application.OpenURL("https://github.com/ZeroUltra/UnityManualReload");
                 },
@@ -330,13 +336,10 @@ namespace Plugins.ManuallyReload
                     //GUISerializedPropertyBool(p_ShowCompilationAndReloadLog, false, guiContentShowLog);
 
                     GUILayout.Space(10);
-                    //EditorGUILayout.HelpBox("脚本编译之后,按下 F5 进行重载(Realod Domain)" +
-                    //                        "\n\n如遇编译锁住(即在Unity编辑器右下角始终[锁]状态,一般在导入新插件可能遇到此问题) 按下 Ctrl+T 强制进行重载", MessageType.Warning);
-                    guiLabel.richText = true;
                     GUI.DrawTexture(new Rect(425, 107, 22, 22), EditorGUIUtility.IconContent("Locked").image);
                     GUILayout.Box(new GUIContent($"脚本编译之后，按下 <color=red>F5</color> 进行重载(Realod Domain)" +
                                                           $"\n\n如遇编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载(Unity编辑器右下角始终为 <color=yellow>[锁]    </color> 状态时)" +
-                                                          $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), GUILayout.MinWidth(520));
+                                                          $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), boxStyle, GUILayout.MinWidth(520));
                 },
                 keywords = new string[] { "Reload", "Manually" }
             };
