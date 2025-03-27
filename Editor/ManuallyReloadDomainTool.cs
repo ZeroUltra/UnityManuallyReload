@@ -89,6 +89,11 @@ namespace Plugins.ManuallyReload
             {
                 ForceReloadDomain();
             }
+            else
+            {
+                //Debug.LogFormat(logWhite, "No need to reload domain,if you want to reload domain,please use ctrl+t to force reload domain!");
+                Debug.LogFormat(logWhite, "无需再reload domain,如需请使用ctrl+t强制reload domain!");
+            }
         }
         //强制刷新
         [MenuItem(menuForceRealodDomain)]

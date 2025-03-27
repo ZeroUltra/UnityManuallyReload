@@ -47,11 +47,17 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 ## 使用方法
 
-​	Unity中`Edit->ProjectSetting->Manually Reload Domain` ,勾选上`Enable Manually Reload`
+1. Unity中`Edit->ProjectSetting->Manually Reload Domain` ,勾选上`Enable Manually Reload`
+2. 当修改完脚本之后,按下`F5`进行reload domain (会自动检测是否需要reload domain)
+3. 如遇一只🔒的情况按下`ctrl+t`强制reload domain
+
+![image-20250327215023103](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202503272150773.png) 
+
+
 
 参数说明:
 
-* `Enable Fully Manually Reload` 完全手动Reload(指不会在运行前检测是否需要reload),如果为true,需完全手动触发
+* `Enable Fully Manually Reload` 完全手动Reload(指不会在运行前检测是否需要reload),如果为true,需完全手动触发,完全由自己决定什么时候reload
 * `Editor Scripts Manually Reload?` 是否Editor代码也需手动Reload?(当且仅当编辑的代码属于`Editor`才有效, 即如果为`true`,那么editor代码编译完后也不会readlo domain 需要手动调用, 如果为`false`,editor代码编译完后会自动调用reload,在写editor GUI的时候可设置为false,方便快速查看)
 
 ## 注意点
