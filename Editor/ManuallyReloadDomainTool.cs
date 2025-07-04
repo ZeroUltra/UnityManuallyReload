@@ -231,13 +231,13 @@ namespace Plugins.ManuallyReload
     {
         [Header("Main Setting")]
         [Tooltip("是否启用手动Reload")]
-        public bool IsEnableManuallyReload = true;
+        public bool IsEnableManuallyReload;
         [Tooltip("是否完全手动Reload 为true时,除了手动外,其他操作均不触发Reload")]
-        public bool IsFullyManuallyReload = false;
+        public bool IsFullyManuallyReload;
         [Tooltip("是否监听代码行为 默认当创建/删除(cs/asmdef/asmref)时会触发Reload 设置为true时,代码行为变化不再触发Reload")]
-        public bool IsMonitoringCodeBehavior = false;
+        public bool IsMonitoringCodeBehavior;
         [Tooltip("是否Editor代码也需手动Reload 当编辑Editor代码才有效")]
-        public bool IsEditorUseManuallyReload = false;
+        public bool IsEditorUseManuallyReload;
 
         //[Header("Other Setting (Optional)")]
         //[Tooltip("显示编译和Reload耗时日志")]
