@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using Assembly = UnityEditor.Compilation.Assembly;
 using Debug = UnityEngine.Debug;
 using AssemblyFlags = UnityEditor.Compilation.AssemblyFlags;
-using System;
 
 namespace Plugins.ManuallyReload
 {
@@ -48,7 +47,7 @@ namespace Plugins.ManuallyReload
         //编译时间
         static Stopwatch compileSW = new Stopwatch();
         //是否编译了
-        static bool isNewCompile = false;
+        public static bool isNewCompile = false;
         static bool isReloaded = false; //完全模式下是否reload
         static List<string> listAssembly = new List<string>();
 
@@ -92,7 +91,7 @@ namespace Plugins.ManuallyReload
             else
             {
                 //Debug.LogFormat(logWhite, "No need to reload domain,if you want to reload domain,please use ctrl+t to force reload domain!");
-                Debug.LogFormat(logWhite, "无需再reload domain,如需请使用ctrl+t强制reload domain!");
+                Debug.LogFormat(logWhite, "无需再reload domain,如需请使用 Ctrl+T 强制reload domain!");
             }
         }
         //强制刷新
@@ -185,13 +184,16 @@ namespace Plugins.ManuallyReload
                         listEditorAssemblys.RemoveAt(i);
                     }
                 }
-                //判断当前编译的dll是否是edior dll
-                bool result = listAssembly.TrueForAll(assemblyPath => listEditorAssemblys.Exists(editAss => editAss.outputPath == assemblyPath));
-                //如果都是编辑器代码
-                if (result)
+                if (listAssembly.Count > 0)
                 {
-                    Debug.LogFormat(logWhite, "[IsEditorUseManuallyReload=false]   Force Reload......");
-                    ForceReloadDomain();
+                    //判断当前编译的dll是否是edior dll
+                    bool result = listAssembly.TrueForAll(assemblyPath => listEditorAssemblys.Exists(editAss => editAss.outputPath == assemblyPath));
+                    //如果都是编辑器代码
+                    if (result)
+                    {
+                        Debug.LogFormat(logWhite, "[IsEditorUseManuallyReload = false]  Editor Code Changed Force Reload......");
+                        ForceReloadDomain();
+                    }
                 }
             }
         }
@@ -221,17 +223,20 @@ namespace Plugins.ManuallyReload
         #endregion
     }
 
-    #region 相关设置
+    /// <summary>
+    /// 设置
+    /// </summary>
     [System.Serializable]
     public class ManuallyReloadSetting : ScriptableObject
     {
-        [Space(5)]
-        //  [Header("Main Setting")]
+        [Header("Main Setting")]
         [Tooltip("是否启用手动Reload")]
-        public bool IsEnableManuallyReload = false;
-        [Tooltip("完全手动Reload(指不会在运行前检测是否需要reload),需完全手动触发")]
+        public bool IsEnableManuallyReload = true;
+        [Tooltip("是否完全手动Reload 为true时,除了手动外,其他操作均不触发Reload")]
         public bool IsFullyManuallyReload = false;
-        [Tooltip("是否Editor代码也需手动Reload?当且仅当编辑Editor代码才有效")]
+        [Tooltip("是否监听代码行为 默认当创建/删除(cs/asmdef/asmref)时会触发Reload 设置为true时,代码行为变化不再触发Reload")]
+        public bool IsMonitoringCodeBehavior = true;
+        [Tooltip("是否Editor代码也需手动Reload 当编辑Editor代码才有效")]
         public bool IsEditorUseManuallyReload;
 
         //[Header("Other Setting (Optional)")]
@@ -266,21 +271,24 @@ namespace Plugins.ManuallyReload
         }
     }
 
-    // 注册到setting中
-    //https://docs.unity.cn/cn/2022.3/ScriptReference/SettingsProvider.html
-    static class ManuallyReloadRegisterToSetting
+    /// <summary>
+    /// 注册到ProjectSettings中 https://docs.unity.cn/cn/2022.3/ScriptReference/SettingsProvider.html
+    /// </summary>
+    static class ManuallyReloadInProjectSetting
     {
         static GUIStyle iconStyle;
         static GUIStyle boxStyle;
         static SerializedObject so;
         static SerializedProperty p_isEnableManuallyReload;
         static SerializedProperty p_isFullyManuallyReload;
+        static SerializedProperty p_isMonitoringCodeBehaviour;
         static SerializedProperty p_isEditorUseManuallyReload;
         //  static SerializedProperty p_ShowCompilationAndReloadLog;
 
-        static GUIContent guiContentEnable = new GUIContent(" Enable Manually Reload", EditorGUIUtility.IconContent("Refresh").image);
-        static GUIContent guiContentFullyManually = new GUIContent(" Enable Fully Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
-        static GUIContent guiContentEditor = new GUIContent(" Editor Scripts Manually Reload?", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
+        static GUIContent guiContentEnable = new GUIContent(" Manually Reload", EditorGUIUtility.IconContent("Refresh").image);
+        static GUIContent guiContentFullyManually = new GUIContent(" Fully Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
+        static GUIContent guiContentLisCodeBehaviour = new GUIContent(" Monitoring Code Behavior", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
+        static GUIContent guiContentEditor = new GUIContent(" Editor Scripts Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
         //static GUIContent guiContentShowLog = new GUIContent(" Show Compilation And Reload Log", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
         [SettingsProvider]
         public static SettingsProvider CreateMyManuallyReloadProvider()
@@ -310,6 +318,7 @@ namespace Plugins.ManuallyReload
                         p_isEnableManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEnableManuallyReload));
                         p_isFullyManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsFullyManuallyReload));
                         p_isEditorUseManuallyReload = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsEditorUseManuallyReload));
+                        p_isMonitoringCodeBehaviour = so.FindProperty(nameof(ManuallyReloadSetting.Instance.IsMonitoringCodeBehavior));
                         // p_ShowCompilationAndReloadLog = so.FindProperty(nameof(ManuallyReloadSetting.Instance.ShowCompilationAndReloadLog));
                     }
                     var settings = ManuallyReloadSetting.Instance;
@@ -338,10 +347,11 @@ namespace Plugins.ManuallyReload
                     }
                     GUISerializedPropertyBool(p_isFullyManuallyReload, !p_isEnableManuallyReload.boolValue, guiContentFullyManually);
                     GUISerializedPropertyBool(p_isEditorUseManuallyReload, !p_isEnableManuallyReload.boolValue, guiContentEditor);
+                    GUISerializedPropertyBool(p_isMonitoringCodeBehaviour, !p_isEnableManuallyReload.boolValue, guiContentLisCodeBehaviour);
                     //GUISerializedPropertyBool(p_ShowCompilationAndReloadLog, false, guiContentShowLog);
 
                     GUILayout.Space(10);
-                    GUI.DrawTexture(new Rect(425, 107, 22, 22), EditorGUIUtility.IconContent("Locked").image);
+                    GUI.DrawTexture(new Rect(425, 150, 22, 22), EditorGUIUtility.IconContent("Locked").image);
                     GUILayout.Box(new GUIContent($"脚本编译之后，按下 <color=red>F5</color> 进行重载(Realod Domain)" +
                                                           $"\n\n如遇编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载(Unity编辑器右下角始终为 <color=yellow>[锁]    </color> 状态时)" +
                                                           $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), boxStyle, GUILayout.MinWidth(520));
@@ -366,32 +376,56 @@ namespace Plugins.ManuallyReload
             }
         }
     }
-    #endregion
 
-    //当资源导入
+    /// <summary>
+    /// 监听文件变化 
+    /// </summary>
     public class ScriptsProcessor : AssetModificationProcessor
     {
+        static int reloadCount = 0;
         const string metaExtension = ".meta";
-        static void OnWillCreateAsset(string assetName)
+        static void OnWillCreateAsset(string assetPath)
         {
-            if (Path.GetExtension(assetName) == metaExtension)
+            //.meta生成才标识真的创建了文件
+            if (Path.GetExtension(assetPath) == metaExtension)
             {
-                //获取创建文件的类型
-                assetName = assetName.Replace(metaExtension, "");
-                //如果新建脚本或asm
-                if (assetName.EndsWith(".cs") || assetName.EndsWith(".asmdef") || assetName.EndsWith(".asmref"))
+                assetPath = assetPath.Replace(metaExtension, "");
+                Check(assetPath, "New");
+            }
+        }
+        static AssetDeleteResult OnWillDeleteAsset(string assetPath, RemoveAssetOptions option)
+        {
+            Check(assetPath, "Delete");
+            return AssetDeleteResult.DidNotDelete; // 表示没拦截删除流程，只做监听
+        }
+        static void Check(string assetPath, string behaviourCode)
+        {
+            //获取文件的后缀类型
+            string extension = Path.GetExtension(assetPath);
+            //如果cs脚本或asm
+            if (extension == ".cs" || extension == ".asmdef" || extension == ".asmref")
+            {
+                reloadCount++;
+                ManuallyReloadDomainTool.isNewCompile = true;
+                //不监听 为啥放在这里 因为要标记ManuallyReloadDomainTool.isNewCompile = true,新建/添加都newCompile
+                if (ManuallyReloadSetting.Instance.IsMonitoringCodeBehavior)
+                    return;
+                //如果启用
+                if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
                 {
-                    //如果是手动
-                    if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
+                    Debug.Log($"Force Reload Domain, {behaviourCode} File: {assetPath}");
+
+                    if (reloadCount == 1)
                     {
-                        Debug.Log($"Force Reload, New File: {assetName}");
-                        //强制reload domain
-                        ManuallyReloadDomainTool.ForceReloadDomain();
+                        //强制reload domain 延迟一帧 保证只触发一次
+                        EditorApplication.delayCall += () =>
+                        {
+                            ManuallyReloadDomainTool.ForceReloadDomain();
+                            reloadCount = 0;
+                        };
                     }
                 }
             }
         }
-
     }
-
 }
