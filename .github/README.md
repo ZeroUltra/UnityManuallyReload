@@ -8,7 +8,7 @@ Unity2021(2020还好)不知是哪个版本，明显感觉编译reload时间冗�
 
 在unity工作流中，`修改脚本->编译脚本->reload domain(重载域)->进入play`
 
-通过区分assembly能加快编译，但是reload domain 却很慢，每次编译之后都要reload domain，且进入play模式也会reload domain
+通过区分assembly能加快编译，但是reload domain 却很慢，每次编译之后都要reload domain，且进入play模式也会再来一次reload domain
 
 示例:
 
@@ -26,7 +26,7 @@ Unity有个Enter Play Mode Setting  [可配置的进入运行模式 - Unity 手�
 
 ## 如何解决频繁Reload
 
-需要做的就是，添加新脚本或者修改脚本后，经过确认无误之后，我们才reload，而且在进入 play模式，如果已经reload，不会二次reload
+**需要做的就是，添加新脚本或者修改脚本后，经过确认无误之后，我们才reload，而且在进入 play模式，如果已经reload，不会二次reload**
 
 unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorApplication.UnlockReloadAssemblies();`一个加锁，一个解锁.
 
@@ -59,7 +59,7 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 * `Fully Manually Reload`  完全手动Reload (指不会在运行前检测是否需要reload)，如果为true，需完全手动触发，完全由自己决定什么时候reload
 * `Editor Scripts Manually Reload`  是否Editor代码也需手动Reload，当编辑的代码属于`Editor`才有效， 即如果为`true`，那么editor代码编译完后也不会readlo domain 需要手动调用。如果为`false`，editor代码编译完后会自动调用reload，在写editor GUI的时候可设置为false，方便快速查看。
-* `Monitoring Code Behaviour`  是否监听代码**新建/删除**两个行为，默认情况下当创建/删除**(.cs/.asmdef/.asmref)**时会触发reload domain,为true时,代码行为变化不会reload domain。比如==true时，在unity新建代码不会 compile ---> reload
+* `Monitoring Code Behaviour`  是否监听代码**新建/删除**两个行为，默认情况下当创建/删除**(.cs/.asmdef/.asmref)**时会触发reload domain,为true时,代码行为变化不会reload domain。即在Unity的Project视图中新建/删除脚本不会 compile ---> reload
 
 ## 注意点
 
@@ -70,6 +70,8 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 * 当设置`Fully Manually Reload=false`(完全手动模式)时，进入Play模式如果已经reload，则直接进入，如果没有reload则会强制reload（主要是为了重置static数据）; 如果为`Fully Manually Reload=true`，不会执行任何相关reload，进入play模式也不会重置static数据，具体查看 [Unity - Manual: Domain Reloading (unity3d.com)](https://docs.unity3d.com/2022.3/Documentation/Manual/DomainReloading.html)
 
 * 如遇到锁住问题（unity右下角一直出现🔒的情况，可能在导入新插件的时候发生） 按下Ctrl+T强制重载。
+
+* 有个比较很很很少见情况,当play时会报一些错误（比如静态数据错误），此时再怎么reload都没用,这个时候只要随便改下代码(就加个空格都行),然后在回到unity reload之后发现可以正常运行。这个bug不知道为何，不太像是此插件导致的问题。
 
 **需要注意的一点**:
 
