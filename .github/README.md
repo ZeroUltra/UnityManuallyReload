@@ -64,10 +64,10 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 ## 注意点
 
 * 开启之后，新建脚本，修改脚本或者导入插件的时候，只会编译而不会reload。通过`F5`或者菜单`Tools/Reload Domain/Unlock Reload`，手动reload，(相关快捷键自行修改脚本代码)
-
 * 记住，`Unity必须reload之后，才能调用相关域`。例如新建mono脚本如果不reload是挂不到gameobject上的。
+* 当设置`Fully Manually Reload=false`(完全手动模式)时，进入Play模式如果已经reload，则直接进入，如果没有reload则会强制reload（主要是为了重置static数据）; 如果为`Fully Manually Reload=true`，不会执行任何相关reload，进入play模式也不会重置static数据，具体查看 [Unity - Manual: Domain Reloading (unity3d.com)](https://docs.unity3d.com/2022.3/Documentation/Manual/DomainReloading.html)   [关于静态数据问题](## 关于静态数据问题)
 
-* 当设置`Fully Manually Reload=false`(完全手动模式)时，进入Play模式如果已经reload，则直接进入，如果没有reload则会强制reload（主要是为了重置static数据）; 如果为`Fully Manually Reload=true`，不会执行任何相关reload，进入play模式也不会重置static数据，具体查看 [Unity - Manual: Domain Reloading (unity3d.com)](https://docs.unity3d.com/2022.3/Documentation/Manual/DomainReloading.html)
+  
 
 * 如遇其他问题 按下Ctrl+T强制重载。
 
@@ -78,6 +78,18 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 ​	当勾选`Manually Reload`的时候会自动设置`Enter play mode setting`，如果由于其他操作重新设置了 enter play mode setting，请手动设置成下图正确选项，或者重新勾选`Enable Manually Reload`进行自动设置。
 
 ​	![image-20240228000722436](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202402280007905.png)
+
+
+
+## 关于静态数据问题
+
+[joshcamas/unity-domain-reload-helper](https://github.com/joshcamas/unity-domain-reload-helper)
+
+[JonathanTremblay/UnityFastPlay](https://github.com/JonathanTremblay/UnityFastPlay)
+
+[stalomeow/QuickPlayMode](https://github.com/stalomeow/QuickPlayMode)
+
+
 
 ## 更新日志
 
@@ -140,15 +152,10 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 
 
-`有什么问题，欢迎提Issues`
-
-
-
-### 推荐 
+## 其他
 
 [handzlikchris/FastScriptReload](https://github.com/handzlikchris/FastScriptReload)
 
 [Misaka-Mikoto-Tech/UnityScriptHotReload:](https://github.com/Misaka-Mikoto-Tech/UnityScriptHotReload)
 
 [【Unity】引擎编译时间优化 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/601065788)
-
