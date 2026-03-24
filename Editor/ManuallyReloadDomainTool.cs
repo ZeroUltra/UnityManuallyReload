@@ -90,8 +90,14 @@ namespace Plugins.ManuallyReload
             }
             else
             {
-                //Debug.LogFormat(logWhite, "No need to reload domain,if you want to reload domain,please use ctrl+t to force reload domain!");
-                Debug.LogFormat(logWhite, "无需再reload domain,如需请使用 Ctrl+T 强制reload domain!");
+                if (IsAssemblyLocked)
+                {
+                    ForceReloadDomain();
+                }
+                else
+                {
+                    Debug.LogFormat(logWhite, "无需再reload domain,如需请使用 Ctrl+T 强制reload domain!");
+                }
             }
         }
         //强制刷新
@@ -284,8 +290,8 @@ namespace Plugins.ManuallyReload
         static SerializedProperty p_isMonitoringCodeBehaviour;
         static SerializedProperty p_isEditorUseManuallyReload;
         //  static SerializedProperty p_ShowCompilationAndReloadLog;
-
-        static GUIContent guiContentEnable = new GUIContent(" Manually Reload", EditorGUIUtility.IconContent("Refresh").image);
+         
+        static GUIContent guiContentEnable = new GUIContent(" Enable Manually Reload", EditorGUIUtility.IconContent("refresh").image);
         static GUIContent guiContentFullyManually = new GUIContent(" Fully Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
         static GUIContent guiContentLisCodeBehaviour = new GUIContent(" Monitoring Code Behavior", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
         static GUIContent guiContentEditor = new GUIContent(" Editor Scripts Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
@@ -351,9 +357,12 @@ namespace Plugins.ManuallyReload
                     //GUISerializedPropertyBool(p_ShowCompilationAndReloadLog, false, guiContentShowLog);
 
                     GUILayout.Space(10);
-                    GUI.DrawTexture(new Rect(425, 150, 22, 22), EditorGUIUtility.IconContent("Locked").image);
+                    //GUI.DrawTexture(new Rect(425, 150, 22, 22), EditorGUIUtility.IconContent("Locked").image);
+                    //GUILayout.Box(new GUIContent($"脚本编译之后，按下 <color=red>F5</color> 进行重载(Realod Domain)" +
+                    //                                      $"\n\n如遇编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载(Unity编辑器右下角始终为 <color=yellow>[锁]    </color> 状态时)" +
+                    //                                      $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), boxStyle, GUILayout.MinWidth(520));
                     GUILayout.Box(new GUIContent($"脚本编译之后，按下 <color=red>F5</color> 进行重载(Realod Domain)" +
-                                                          $"\n\n如遇编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载(Unity编辑器右下角始终为 <color=yellow>[锁]    </color> 状态时)" +
+                                                          $"\n\n偶遇到编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载)" +
                                                           $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), boxStyle, GUILayout.MinWidth(520));
                 },
                 keywords = new string[] { "Reload", "Manually" }

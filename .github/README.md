@@ -49,15 +49,15 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 1. Unity中`Edit->ProjectSetting->Manually Reload Domain` ，勾选上`Manually Reload`
 2. 当修改完脚本之后，按下`F5`进行reload domain (会自动检测是否需要reload domain)
-3. 如遇一只🔒的情况按下`Ttrl+T` 组合键强制reload domain
+3. 如遇其他不明情况按下`ctrl+T` 组合键强制reload domain
 
- ![image-20250704171221587](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202507041712129.png)
+ ![image-20260324143911147](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202603241439638.png)
 
 
 
 参数说明:
 
-* `Fully Manually Reload`  完全手动Reload (指不会在运行前检测是否需要reload)，如果为true，需完全手动触发，完全由自己决定什么时候reload
+* `Fully Manually Reload`  完全手动Reload ,不进行任何自动reload，如果为true，完全由自己决定什么时候reload
 * `Editor Scripts Manually Reload`  是否Editor代码也需手动Reload，当编辑的代码属于`Editor`才有效， 即如果为`true`，那么editor代码编译完后也不会readlo domain 需要手动调用。如果为`false`，editor代码编译完后会自动调用reload，在写editor GUI的时候可设置为false，方便快速查看。
 * `Monitoring Code Behaviour`  是否监听代码**新建/删除**两个行为，默认情况下当创建/删除**(.cs/.asmdef/.asmref)**时会触发reload domain,为true时,代码行为变化不会reload domain。即在Unity的Project视图中新建/删除脚本不会 compile ---> reload
 
@@ -69,9 +69,9 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 * 当设置`Fully Manually Reload=false`(完全手动模式)时，进入Play模式如果已经reload，则直接进入，如果没有reload则会强制reload（主要是为了重置static数据）; 如果为`Fully Manually Reload=true`，不会执行任何相关reload，进入play模式也不会重置static数据，具体查看 [Unity - Manual: Domain Reloading (unity3d.com)](https://docs.unity3d.com/2022.3/Documentation/Manual/DomainReloading.html)
 
-* 如遇到锁住问题（unity右下角一直出现🔒的情况，可能在导入新插件的时候发生） 按下Ctrl+T强制重载。
+* 如遇其他问题 按下Ctrl+T强制重载。
 
-* 有个比较很很很少见情况,当play时会报一些错误（比如静态数据错误），此时再怎么reload都没用,这个时候只要随便改下代码(就加个空格都行),然后在回到unity reload之后发现可以正常运行。这个bug不知道为何，不太像是此插件导致的问题。
+* 有个比较**很很很少见情况**,当play时会报一些错误（比如静态数据错误），此**时再怎么reload都没用,这个时候只要随便改下代码**(例如就加个空格都行),然后在回到unity reload之后发现可以正常运行。这个bug不知道是什么原因,应该跟unity内部编译有关系.
 
 **需要注意的一点**:
 
@@ -80,6 +80,10 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 ​	![image-20240228000722436](https://raw.githubusercontent.com/ZeroUltra/MediaLibrary/main/Imgs/202402280007905.png)
 
 ## 更新日志
+
+#### V1.1.0
+
+* 现在按下F5进行reloaddomain时,即使是编译锁住状态(unity编辑器右下角有个🔒)也能进行
 
 #### v1.0.9
 
