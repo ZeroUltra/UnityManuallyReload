@@ -27,22 +27,7 @@ namespace Plugins.ManuallyReload
         const string kFirstEnterUnity = "FirstEnterUnity"; //是否首次进入unity
         const string kReloadDomainTimer = "ReloadDomainTimer"; //计时
 
-        //https://github.com/INeatFreak/unity-background-recompiler 来自这个库 反射获取是否锁住
-        static MethodInfo CanReloadAssembliesMethod;
-        static bool IsAssemblyLocked
-        {
-            get
-            {
-                if (CanReloadAssembliesMethod == null)
-                {
-                    // source: https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/EditorApplication.bindings.cs#L154
-                    CanReloadAssembliesMethod = typeof(EditorApplication).GetMethod("CanReloadAssemblies", BindingFlags.NonPublic | BindingFlags.Static);
-                    if (CanReloadAssembliesMethod == null)
-                        Debug.LogError("Can't find CanReloadAssemblies method. It might have been renamed or removed.");
-                }
-                return !(bool)CanReloadAssembliesMethod.Invoke(null, null);
-            }
-        }
+        static MethodInfo canReloadAssembliesMethod;
 
         //编译时间
         static Stopwatch compileSW = new Stopwatch();
@@ -79,36 +64,6 @@ namespace Plugins.ManuallyReload
             EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
         }
 
-        #region Menu
-        //手动刷新
-        [MenuItem(menuRealodDomain)]
-        static void ManualReload()
-        {
-            if (isNewCompile && ManuallyReloadSetting.Instance.IsEnableManuallyReload)
-            {
-                ForceReloadDomain();
-            }
-            else
-            {
-                if (IsAssemblyLocked)
-                {
-                    ForceReloadDomain();
-                }
-                else
-                {
-                    Debug.LogFormat(logWhite, "无需再reload domain,如需请使用 Ctrl+T 强制reload domain!");
-                }
-            }
-        }
-        //强制刷新
-        [MenuItem(menuForceRealodDomain)]
-        static void MenuForceReloadDomain()
-        {
-            if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
-                ForceReloadDomain();
-        }
-        #endregion
-
         //运行模式改变
         static void EditorApplication_playModeStateChanged(PlayModeStateChange state)
         {
@@ -130,27 +85,6 @@ namespace Plugins.ManuallyReload
                     break;
 
             }
-        }
-
-        public static void LockRealodDomain()
-        {
-            //如果没有锁住 锁住
-            if (!IsAssemblyLocked)
-                EditorApplication.LockReloadAssemblies();
-        }
-
-        public static void UnlockReloadDomain()
-        {
-            //如果锁住了 打开
-            if (IsAssemblyLocked)
-                EditorApplication.UnlockReloadAssemblies();
-        }
-
-        //强制reloaddomain
-        public static void ForceReloadDomain()
-        {
-            UnlockReloadDomain();
-            EditorUtility.RequestScriptReload();
         }
 
         #region AssembleCompile
@@ -227,6 +161,80 @@ namespace Plugins.ManuallyReload
             isReloaded = true;
         }
         #endregion
+
+        #region Menu
+        //手动刷新
+        [MenuItem(menuRealodDomain)]
+        static void ManualReload()
+        {
+            if (!ManuallyReloadSetting.Instance.IsEnableManuallyReload) return;
+            if (isNewCompile)
+            {
+                ForceReloadDomain();
+            }
+            else
+            {
+                //Debug.Log(IsAssemblyReloadLocked() + " " + EditorApplication.isCompiling);
+                if (IsAssemblyReloadLocked() && EditorApplication.isCompiling)
+                {
+                    ForceReloadDomain();
+                }
+                else
+                {
+                    Debug.LogFormat(logWhite, "无需再reload domain,如需请使用 Ctrl+T 强制reload domain!");
+                }
+            }
+        }
+        //强制刷新
+        [MenuItem(menuForceRealodDomain)]
+        static void MenuForceReloadDomain()
+        {
+            if (ManuallyReloadSetting.Instance.IsEnableManuallyReload)
+                ForceReloadDomain();
+        }
+        #endregion
+    
+
+        /// <summary>
+        /// 判断当前程序集重载是否锁定了 (右下角显示 锁)
+        /// </summary>
+        public static bool IsAssemblyReloadLocked()
+        {
+            //https://github.com/INeatFreak/unity-background-recompiler
+            //https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/EditorApplication.bindings.cs#L154
+            if (canReloadAssembliesMethod == null)
+                canReloadAssembliesMethod = typeof(EditorApplication).GetMethod("CanReloadAssemblies", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            if (canReloadAssembliesMethod != null)
+            {
+                // 如果 CanReloadAssemblies 返回 false，说明目前不允许重载（被锁定或正在运行等）
+                bool canReload = (bool)canReloadAssembliesMethod.Invoke(null, null);
+                return !canReload;/* && EditorApplication.isCompiling;*/
+            }
+            Debug.LogError("无法通过当前版本的反射获取 [CanReloadAssemblies]，请检查 Unity 版本差异。");
+            return false;
+        }
+
+        public static void LockRealodDomain()
+        {
+            //如果没有锁住 锁住
+            if (!IsAssemblyReloadLocked())
+                EditorApplication.LockReloadAssemblies();
+        }
+
+        public static void UnlockReloadDomain()
+        {
+            //如果锁住了 打开
+            if (IsAssemblyReloadLocked())
+                EditorApplication.UnlockReloadAssemblies();
+        }
+
+        //强制reloaddomain
+        public static void ForceReloadDomain()
+        {
+            UnlockReloadDomain();
+            EditorUtility.RequestScriptReload();
+        }
+
     }
 
     /// <summary>
@@ -290,7 +298,7 @@ namespace Plugins.ManuallyReload
         static SerializedProperty p_isMonitoringCodeBehaviour;
         static SerializedProperty p_isEditorUseManuallyReload;
         //  static SerializedProperty p_ShowCompilationAndReloadLog;
-         
+
         static GUIContent guiContentEnable = new GUIContent(" Enable Manually Reload", EditorGUIUtility.IconContent("refresh").image);
         static GUIContent guiContentFullyManually = new GUIContent(" Fully Manually Reload", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
         static GUIContent guiContentLisCodeBehaviour = new GUIContent(" Monitoring Code Behavior", EditorGUIUtility.IconContent("d_winbtn_win_restore").image);
