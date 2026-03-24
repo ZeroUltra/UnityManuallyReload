@@ -362,7 +362,7 @@ namespace Plugins.ManuallyReload
                     //                                      $"\n\n如遇编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载(Unity编辑器右下角始终为 <color=yellow>[锁]    </color> 状态时)" +
                     //                                      $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), boxStyle, GUILayout.MinWidth(520));
                     GUILayout.Box(new GUIContent($"脚本编译之后，按下 <color=red>F5</color> 进行重载(Realod Domain)" +
-                                                          $"\n\n偶遇到编译锁住，按下 <color=red>Ctrl+T</color> 强制进行重载)" +
+                                                          $"\n\n如遇其他问题，按下 <color=red>Ctrl+T</color> 强制进行重载)" +
                                                           $"\n\n如需修改快捷键请自行修改代码", EditorGUIUtility.IconContent("d_console.warnicon").image), boxStyle, GUILayout.MinWidth(520));
                 },
                 keywords = new string[] { "Reload", "Manually" }
