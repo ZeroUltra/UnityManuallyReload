@@ -91,7 +91,6 @@ unity 提供了两个API `EditorApplication.LockReloadAssemblies();`和` EditorA
 
 [joshcamas/unity-domain-reload-helper](https://github.com/joshcamas/unity-domain-reload-helper)
 
-[JonathanTremblay/UnityFastPlay](https://github.com/JonathanTremblay/UnityFastPlay)
 
 [stalomeow/QuickPlayMode](https://github.com/stalomeow/QuickPlayMode)
 
